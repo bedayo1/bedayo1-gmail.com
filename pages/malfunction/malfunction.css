@@ -1,5 +1,33 @@
 /* malfunction.html 전용 스타일 (고장처치 매뉴얼 페이지에서만 사용) */
 
+.vehicle-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.vehicle-tabs button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.vehicle-tabs button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+.col-no {
+  width: 56px;
+}
+
 #malfunction-tbody td.title-cell a {
   color: var(--color-primary);
   cursor: pointer;
@@ -20,18 +48,33 @@
   font-weight: 600;
 }
 
-.detail-image {
-  width: 100%;
+.detail-section p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.detail-photo {
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  display: block;
+  margin-bottom: 8px;
+}
+
+#photo-preview-wrap {
+  margin-top: 8px;
+}
+
+#photo-preview-wrap img {
+  max-width: 160px;
+  max-height: 120px;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
   display: block;
 }
 
-.detail-image-empty {
-  padding: 24px;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 13px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius);
+#photo-preview-wrap .btn {
+  margin-top: 6px;
 }

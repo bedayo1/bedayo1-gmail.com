@@ -14,9 +14,11 @@
 
 <main class="app-main">
   <h1 class="page-title">고장처치 매뉴얼</h1>
-  <p class="page-desc">전동차 고장유형별 처치 절차를 등록하고 관리합니다.</p>
+  <p class="page-desc">차종별 전동차 고장처치 절차를 등록하고 관리합니다.</p>
 
   <section class="card">
+    <div class="vehicle-tabs" id="vehicle-tabs"></div>
+
     <div class="toolbar">
       <div></div>
       <button class="btn" id="btn-new">+ 매뉴얼 추가</button>
@@ -25,8 +27,9 @@
     <table class="data-table">
       <thead>
         <tr>
+          <th class="col-no">번호</th>
           <th>제목 <span style="font-weight:400; text-transform:none; letter-spacing:0;">(클릭 시 상세보기)</span></th>
-          <th>고장유형</th>
+          <th>차종</th>
           <th></th>
         </tr>
       </thead>
@@ -39,7 +42,7 @@
 
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal">
+  <div class="modal" style="max-width:560px;">
     <h2 class="page-title" style="font-size:18px;" id="modal-title">매뉴얼 추가</h2>
     <form id="malfunction-form">
       <input type="hidden" id="f-id">
@@ -48,26 +51,45 @@
         <input type="text" id="f-title" required>
       </div>
       <div class="form-row">
-        <label for="f-type">고장유형</label>
-        <select id="f-type">
-          <option value="출입문">출입문</option>
-          <option value="제동장치">제동장치</option>
-          <option value="신호장치">신호장치</option>
-          <option value="전기장치">전기장치</option>
-          <option value="기타">기타</option>
+        <label for="f-vehicletype">차종</label>
+        <select id="f-vehicletype">
+          <option value="VVVF">1호선 VVVF</option>
+          <option value="저항차">1호선 저항차</option>
+          <option value="ATO">2호선 ATO</option>
         </select>
       </div>
       <div class="form-row">
-        <label for="f-procedure">처치 절차</label>
-        <textarea id="f-procedure" rows="4" required></textarea>
+        <label for="f-symptom">[현상]</label>
+        <textarea id="f-symptom" rows="3"></textarea>
       </div>
       <div class="form-row">
-        <label for="f-exampleimg">고장예시 이미지 URL</label>
-        <input type="text" id="f-exampleimg" placeholder="https://...">
+        <label for="f-cause">[원인]</label>
+        <textarea id="f-cause" rows="3"></textarea>
       </div>
       <div class="form-row">
-        <label for="f-manualimg">매뉴얼 이미지 URL</label>
-        <input type="text" id="f-manualimg" placeholder="https://...">
+        <label for="f-procedure">[조치요령]</label>
+        <textarea id="f-procedure" rows="5" required></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-state">[상태]</label>
+        <textarea id="f-state" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-reference">[참고]</label>
+        <textarea id="f-reference" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-notes">[※ 주의사항]</label>
+        <textarea id="f-notes" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-photonote">[관련사진] (사진 설명)</label>
+        <textarea id="f-photonote" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-photofile">관련사진 업로드</label>
+        <input type="file" id="f-photofile" accept="image/*">
+        <div id="photo-preview-wrap"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" id="btn-cancel">취소</button>
@@ -79,7 +101,7 @@
 
 <!-- 상세 화면 (목록에서 제목 클릭 시) -->
 <div class="modal-backdrop" id="detail-backdrop">
-  <div class="modal" style="max-width:520px;">
+  <div class="modal" style="max-width:560px;">
     <h2 class="page-title" style="font-size:18px;" id="detail-title">-</h2>
     <div id="detail-body"></div>
     <div class="modal-actions">
