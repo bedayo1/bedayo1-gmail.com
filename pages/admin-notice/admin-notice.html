@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 공지·지시사항 관리</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./admin-notice.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">공지·지시사항 관리</h1>
+  <p class="page-desc">전 직원에게 공지되는 공지사항과 승무지시사항을 등록합니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 등록</button>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>제목</th>
+          <th>구분</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="admin-notice-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">등록</h2>
+    <form id="admin-notice-form">
+      <input type="hidden" id="f-id">
+      <div class="form-row">
+        <label for="f-title">제목</label>
+        <input type="text" id="f-title" required>
+      </div>
+      <div class="form-row">
+        <label for="f-type">구분</label>
+        <select id="f-type">
+          <option value="공지사항">공지사항</option>
+          <option value="지시사항">지시사항</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="f-content">내용</label>
+        <textarea id="f-content" rows="4" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./admin-notice.js"></script>
+</body>
+</html>

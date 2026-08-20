@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 자유게시판</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./board.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">자유게시판</h1>
+  <p class="page-desc">직원들의 자유로운 소통 공간입니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 글쓰기</button>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>제목</th>
+          <th>작성자</th>
+          <th>작성일</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="board-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">글쓰기</h2>
+    <form id="board-form">
+      <input type="hidden" id="f-id">
+      <div class="form-row">
+        <label for="f-title">제목</label>
+        <input type="text" id="f-title" required>
+      </div>
+      <div class="form-row">
+        <label for="f-author">작성자</label>
+        <input type="text" id="f-author" required>
+      </div>
+      <div class="form-row">
+        <label for="f-content">내용</label>
+        <textarea id="f-content" rows="5" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./board.js"></script>
+</body>
+</html>

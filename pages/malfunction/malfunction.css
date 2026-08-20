@@ -1,0 +1,37 @@
+/* malfunction.html 전용 스타일 (고장처치 매뉴얼 페이지에서만 사용) */
+
+#malfunction-tbody td.title-cell a {
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+#malfunction-tbody td.title-cell a:hover {
+  text-decoration: underline;
+}
+
+.detail-section {
+  margin-bottom: 14px;
+}
+
+.detail-section h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.detail-image {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  display: block;
+}
+
+.detail-image-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+}

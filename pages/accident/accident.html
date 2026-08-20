@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 사고사례</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./accident.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">사고사례</h1>
+  <p class="page-desc">과거 사고사례를 등록하고 학습 자료로 공유합니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 사고사례 추가</button>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>제목</th>
+          <th>발생일</th>
+          <th>호선</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="accident-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">사고사례 추가</h2>
+    <form id="accident-form">
+      <input type="hidden" id="f-id">
+      <div class="form-row">
+        <label for="f-title">제목</label>
+        <input type="text" id="f-title" required>
+      </div>
+      <div class="form-row">
+        <label for="f-date">발생일</label>
+        <input type="date" id="f-date" required>
+      </div>
+      <div class="form-row">
+        <label for="f-line">호선</label>
+        <input type="text" id="f-line" placeholder="예: 2호선" required>
+      </div>
+      <div class="form-row">
+        <label for="f-summary">내용 요약</label>
+        <textarea id="f-summary" rows="4" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./accident.js"></script>
+</body>
+</html>

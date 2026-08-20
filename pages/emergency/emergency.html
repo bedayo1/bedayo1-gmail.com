@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 이례상황 매뉴얼</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./emergency.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">이례상황 매뉴얼</h1>
+  <p class="page-desc">화재·충돌 등 이례상황 대응 절차를 등록하고 관리합니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 매뉴얼 추가</button>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>제목</th>
+          <th>유형</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="emergency-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">매뉴얼 추가</h2>
+    <form id="emergency-form">
+      <input type="hidden" id="f-id">
+      <div class="form-row">
+        <label for="f-title">제목</label>
+        <input type="text" id="f-title" required>
+      </div>
+      <div class="form-row">
+        <label for="f-category">유형</label>
+        <select id="f-category">
+          <option value="화재">화재</option>
+          <option value="충돌">충돌</option>
+          <option value="탈선">탈선</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="f-procedure">대응 절차</label>
+        <textarea id="f-procedure" rows="4" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./emergency.js"></script>
+</body>
+</html>

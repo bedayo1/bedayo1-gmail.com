@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 직원 관리</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./admin-employee.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">직원 관리</h1>
+  <p class="page-desc">기관사/승무원 계정을 등록하고 관리합니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 직원 등록</button>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>사번</th>
+          <th>이름</th>
+          <th>직급</th>
+          <th>소속</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="admin-employee-tbody"></tbody>
+    </table>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">직원 등록</h2>
+    <form id="admin-employee-form">
+      <input type="hidden" id="f-id">
+      <div class="form-row">
+        <label for="f-empid">사번</label>
+        <input type="text" id="f-empid" placeholder="예: 22100119" required>
+      </div>
+      <div class="form-row">
+        <label for="f-name">이름</label>
+        <input type="text" id="f-name" required>
+      </div>
+      <div class="form-row">
+        <label for="f-role">직급</label>
+        <select id="f-role">
+          <option value="기관사">기관사</option>
+          <option value="차장">차장</option>
+          <option value="부기관사">부기관사</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="f-dept">소속</label>
+        <input type="text" id="f-dept" placeholder="예: 신답승무사업소" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
+        <button type="submit" class="btn">저장</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./admin-employee.js"></script>
+</body>
+</html>

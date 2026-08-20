@@ -1,0 +1,6 @@
+/* accident.html 전용 스타일 (사고사례 페이지에서만 사용) */
+
+#accident-tbody td.summary {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
