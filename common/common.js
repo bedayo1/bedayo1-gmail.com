@@ -12,6 +12,7 @@ const STORAGE_PREFIX = "kcs_"; // 기관사(KiCSa) 안전교육 앱 localStorage
 
 /* ---------- 데이터 저장 유틸 (페이지별 전역 변수의 영속화에 사용) ---------- */
 
+
 function loadData(key, defaultValue) {
   try {
     const raw = localStorage.getItem(STORAGE_PREFIX + key);
