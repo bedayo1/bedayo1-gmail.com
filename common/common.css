@@ -1,23 +1,42 @@
 /* ============================================
    공통 CSS — 2개 이상의 페이지에서 쓰는 스타일만 여기에 작성
+   디자인 시스템: WattVision (DESIGN.md, https://designmd.ai) 톤 적용
    ============================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
 :root {
-  --color-primary: #1a5fb4;
-  --color-primary-dark: #123a70;
-  --color-accent: #f5b301;
-  --color-danger: #d64545;
-  --color-success: #2e8b57;
-  --color-bg: #f4f6f9;
-  --color-surface: #ffffff;
-  --color-border: #e0e4ea;
-  --color-text: #1f2937;
-  --color-text-muted: #6b7280;
-  --radius: 8px;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --color-primary: #00e5ff;       /* 강조/데이터 (Cian/Neon) */
+  --color-primary-text: #052226;  /* 밝은 강조색 위에 올라가는 어두운 글자색 */
+  --color-danger: #ff453a;        /* 경고/위험 */
+  --color-danger-bg: #3a1c1c;
+  --color-success: #32d478;       /* 정상/완료 (Verde Lima 계열) */
+  --color-bg: #121212;            /* 배경 */
+  --color-surface: #1e1e1e;       /* 카드 표면 */
+  --color-surface-hover: #252525;
+  --color-border: #2c2c2e;
+  --color-text: #ffffff;
+  --color-text-muted: #98989d;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   --header-height: 64px;
   --sidebar-width: 220px;
   --footer-height: 48px;
+  --font-body: "Inter", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* 라이트 모드 (common.js toggleTheme()이 <html data-theme="light">로 전환) */
+:root[data-theme="light"] {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-hover: #eef0f3;
+  --color-border: #dfe3e8;
+  --color-text: #16181c;
+  --color-text-muted: #64707d;
+  --color-danger-bg: #fdecea;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -27,7 +46,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  font-family: var(--font-body);
   background: var(--color-bg);
   color: var(--color-text);
 }
@@ -62,8 +81,9 @@ body {
 .site-header {
   grid-area: header;
   height: var(--header-height);
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,25 +91,50 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: var(--shadow);
 }
 
 .site-header .brand {
   font-weight: 700;
   font-size: 18px;
   white-space: nowrap;
+  color: var(--color-primary);
 }
 
 .site-header .brand .sub {
   display: block;
   font-size: 11px;
   font-weight: 400;
-  opacity: 0.75;
+  color: var(--color-text-muted);
 }
 
 .site-header .header-date {
+  font-family: var(--font-mono);
   font-size: 13px;
-  opacity: 0.85;
+  color: var(--color-text-muted);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.theme-toggle-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--color-surface-hover);
 }
 
 /* ---------- 사이드바 ---------- */
@@ -112,7 +157,11 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0 10px;
-  margin-bottom: 10px;
+  margin: 18px 0 10px;
+}
+
+.sidebar-title:first-child {
+  margin-top: 0;
 }
 
 .sidebar-menu {
@@ -131,7 +180,7 @@ body {
   padding: 10px 12px;
   border-radius: var(--radius);
   font-size: 14px;
-  color: var(--color-text);
+  color: var(--color-text-muted);
 }
 
 .sidebar-menu a .icon {
@@ -141,12 +190,13 @@ body {
 }
 
 .sidebar-menu a:hover {
-  background: var(--color-bg);
+  background: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
 .sidebar-menu a.active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-primary-text);
   font-weight: 600;
 }
 
@@ -189,7 +239,7 @@ body {
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 20px;
 }
@@ -217,29 +267,30 @@ body {
   font-weight: 600;
   cursor: pointer;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-primary-text);
 }
 
 .btn:hover {
-  background: var(--color-primary-dark);
+  filter: brightness(0.9);
 }
 
 .btn.secondary {
-  background: #fff;
+  background: transparent;
   color: var(--color-text);
   border: 1px solid var(--color-border);
 }
 
 .btn.secondary:hover {
-  background: var(--color-bg);
+  background: var(--color-surface-hover);
 }
 
 .btn.danger {
   background: var(--color-danger);
+  color: #fff;
 }
 
 .btn.danger:hover {
-  background: #b83a3a;
+  filter: brightness(0.9);
 }
 
 .btn.small {
@@ -268,7 +319,7 @@ body {
 }
 
 .data-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--color-surface-hover);
 }
 
 .badge {
@@ -279,9 +330,11 @@ body {
   font-weight: 600;
 }
 
-.badge.ok { background: #e6f4ea; color: var(--color-success); }
-.badge.warn { background: #fff4dd; color: #92650b; }
-.badge.danger { background: #fdecec; color: var(--color-danger); }
+.badge.ok { background: rgba(50, 212, 120, 0.15); color: var(--color-success); }
+.badge.info { background: rgba(0, 229, 255, 0.15); color: var(--color-primary); }
+.badge.neutral { background: var(--color-surface-hover); color: var(--color-text-muted); }
+.badge.warn { background: rgba(0, 229, 255, 0.15); color: var(--color-primary); }
+.badge.danger { background: var(--color-danger-bg); color: var(--color-danger); }
 
 .form-row {
   display: flex;
@@ -297,17 +350,19 @@ body {
 }
 
 .form-row input, .form-row select, .form-row textarea {
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: 9px 10px;
   font-size: 14px;
   font-family: inherit;
+  color: var(--color-text);
 }
 
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(0, 0, 0, 0.6);
   display: none;
   align-items: center;
   justify-content: center;
@@ -319,12 +374,13 @@ body {
 }
 
 .modal {
-  background: #fff;
-  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 24px;
   width: 100%;
   max-width: 420px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .modal-actions {
@@ -350,14 +406,20 @@ body {
   font-size: 14px;
 }
 
+/* 숫자 지표(KPI)는 모노스페이스로 표시 */
+.stat-value, .kpi {
+  font-family: var(--font-mono);
+}
+
 /* ---------- 토스트 알림 (common.js showToast 가 사용) ---------- */
 .toast {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  background: #1f2937;
-  color: #fff;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   padding: 10px 18px;
   border-radius: var(--radius);
   font-size: 14px;

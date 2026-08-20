@@ -9,9 +9,9 @@ let courses = loadData("courses", [
 saveData("courses", courses); // 최초 로드시 시드 데이터를 즉시 영속화해 다른 페이지(index.js)에서도 바로 조회 가능
 
 const STATUS_LABEL = {
-  planned: { text: "예정", cls: "warn" },
-  ongoing: { text: "진행중", cls: "ok" },
-  done: { text: "완료", cls: "danger" },
+  planned: { text: "예정", cls: "neutral" },
+  ongoing: { text: "진행중", cls: "info" },
+  done: { text: "완료", cls: "ok" },
 };
 
 /* ---------- CRUD ---------- */
