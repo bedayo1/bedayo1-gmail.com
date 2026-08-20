@@ -37,7 +37,7 @@
 
 <div id="site-footer"></div>
 
-<!-- 등록/수정 모달 -->
+<!-- 상세/등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal">
     <h2 class="page-title" style="font-size:18px;" id="modal-title">매뉴얼 추가</h2>
@@ -48,7 +48,7 @@
         <input type="text" id="f-title" required>
       </div>
       <div class="form-row">
-        <label for="f-category">유형</label>
+        <label for="f-category">상황 유형</label>
         <select id="f-category">
           <option value="화재">화재</option>
           <option value="충돌">충돌</option>
@@ -57,8 +57,20 @@
         </select>
       </div>
       <div class="form-row">
-        <label for="f-procedure">대응 절차</label>
-        <textarea id="f-procedure" rows="4" required></textarea>
+        <label for="f-condition">발생/적용 조건</label>
+        <textarea id="f-condition" rows="2" required></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-procedure">대응 절차 (단계별로 한 줄씩 입력)</label>
+        <textarea id="f-procedure" rows="5" required></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-caution">주의사항</label>
+        <textarea id="f-caution" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-reference">관련 근거(규정)</label>
+        <input type="text" id="f-reference">
       </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" id="btn-cancel">취소</button>

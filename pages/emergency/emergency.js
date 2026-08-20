@@ -1,8 +1,33 @@
 /* emergency.html 전용 데이터 & 로직 */
 
 let emergencies = loadData("emergencies", [
-  { id: uid(), title: "터널 내 정차 시 승객 대피", category: "화재", procedure: "가장 가까운 비상구 방향으로 승객 유도. 관제 지시를 우선 따른다." },
-  { id: uid(), title: "선로 내 장애물 발견", category: "기타", procedure: "즉시 비상제동 체결 후 관제 보고. 서행 통과 절대 금지." },
+  {
+    id: uid(),
+    title: "터널 내 정차 시 승객 대피",
+    category: "화재",
+    condition: "터널 구간에서 화재로 인해 열차가 정차하고 자력 운행이 불가능한 경우",
+    procedureSteps: [
+      "즉시 비상제동 체결 및 관제 보고",
+      "승객 안내방송으로 상황 공지",
+      "가장 가까운 비상구 방향으로 승객 유도",
+      "대피 완료 후 관제에 최종 인원 보고",
+    ],
+    caution: "관제 지시 없이 임의로 열차를 재기동하지 않는다. 연기 방향을 확인해 반대 방향으로 대피시킨다.",
+    reference: "철도안전법 시행규칙 제.., 사내 비상대응지침 3장",
+  },
+  {
+    id: uid(),
+    title: "선로 내 장애물 발견",
+    category: "기타",
+    condition: "운행 중 전방 선로 위에서 사람, 차량, 낙하물 등 장애물을 육안으로 확인한 경우",
+    procedureSteps: [
+      "즉시 비상제동 체결",
+      "관제에 위치와 상황 보고",
+      "서행 통과 절대 금지, 관제 지시 대기",
+    ],
+    caution: "장애물 제거를 위해 임의로 선로에 진입하지 않는다.",
+    reference: "사내 비상대응지침 5장",
+  },
 ]);
 saveData("emergencies", emergencies);
 
@@ -49,7 +74,7 @@ function renderEmergencyList() {
     .map(
       (e) => `
       <tr>
-        <td>${e.title}</td>
+        <td><button type="button" class="link-title" data-action="detail" data-id="${e.id}">${e.title}</button></td>
         <td><span class="badge danger">${e.category}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${e.id}">수정</button>
@@ -59,6 +84,9 @@ function renderEmergencyList() {
     )
     .join("");
 
+  tbody.querySelectorAll("[data-action='detail']").forEach((btn) => {
+    btn.addEventListener("click", () => openModal(btn.dataset.id));
+  });
   tbody.querySelectorAll("[data-action='edit']").forEach((btn) => {
     btn.addEventListener("click", () => openModal(btn.dataset.id));
   });
@@ -67,7 +95,7 @@ function renderEmergencyList() {
   });
 }
 
-/* ---------- 모달 (등록/수정 공용 폼) ---------- */
+/* ---------- 모달 (상세/등록/수정 공용) ---------- */
 
 function openModal(id) {
   const backdrop = document.getElementById("modal-backdrop");
@@ -77,8 +105,11 @@ function openModal(id) {
   document.getElementById("f-id").value = id || "";
   document.getElementById("f-title").value = item ? item.title : "";
   document.getElementById("f-category").value = item ? item.category : "화재";
-  document.getElementById("f-procedure").value = item ? item.procedure : "";
-  title.textContent = item ? "매뉴얼 수정" : "매뉴얼 추가";
+  document.getElementById("f-condition").value = item ? item.condition : "";
+  document.getElementById("f-procedure").value = item ? (item.procedureSteps || []).join("\n") : "";
+  document.getElementById("f-caution").value = item ? item.caution : "";
+  document.getElementById("f-reference").value = item ? item.reference : "";
+  title.textContent = item ? "이례상황 매뉴얼 상세" : "매뉴얼 추가";
 
   backdrop.classList.add("open");
 }
@@ -105,7 +136,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = {
       title: document.getElementById("f-title").value.trim(),
       category: document.getElementById("f-category").value,
-      procedure: document.getElementById("f-procedure").value.trim(),
+      condition: document.getElementById("f-condition").value.trim(),
+      procedureSteps: document
+        .getElementById("f-procedure")
+        .value.split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      caution: document.getElementById("f-caution").value.trim(),
+      reference: document.getElementById("f-reference").value.trim(),
     };
 
     if (id) {

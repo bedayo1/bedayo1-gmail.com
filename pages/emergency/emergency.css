@@ -1,1 +1,16 @@
 /* emergency.html 전용 스타일 (이례상황 매뉴얼 페이지에서만 사용) */
+
+.link-title {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.link-title:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
