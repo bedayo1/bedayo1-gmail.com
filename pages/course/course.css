@@ -1,0 +1,6 @@
+/* course.html 전용 스타일 (교육과정 관리 페이지에서만 사용) */
+
+#course-tbody td.actions {
+  display: flex;
+  gap: 6px;
+}
