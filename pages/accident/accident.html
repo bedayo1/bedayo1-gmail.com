@@ -14,7 +14,7 @@
 
 <main class="app-main">
   <h1 class="page-title">사고사례</h1>
-  <p class="page-desc">과거 사고사례를 등록하고 학습 자료로 공유합니다.</p>
+  <p class="page-desc">과거 사고사례(운전정보)를 등록하고 학습 자료로 공유합니다.</p>
 
   <section class="card">
     <div class="toolbar">
@@ -25,9 +25,10 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>제목</th>
-          <th>발생일</th>
+          <th class="col-no">번호</th>
+          <th>제목 <span style="font-weight:400; text-transform:none; letter-spacing:0;">(클릭 시 상세보기)</span></th>
           <th>호선</th>
+          <th>발생일</th>
           <th></th>
         </tr>
       </thead>
@@ -40,31 +41,69 @@
 
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal">
+  <div class="modal" id="edit-modal-box">
     <h2 class="page-title" style="font-size:18px;" id="modal-title">사고사례 추가</h2>
     <form id="accident-form">
       <input type="hidden" id="f-id">
       <div class="form-row">
+        <label for="f-no">호(예: 2026-1)</label>
+        <input type="text" id="f-no" placeholder="예: 2026-15">
+      </div>
+      <div class="form-row">
         <label for="f-title">제목</label>
         <input type="text" id="f-title" required>
+      </div>
+      <div class="form-row">
+        <label for="f-line">호선</label>
+        <input type="text" id="f-line" placeholder="예: 4호선" required>
       </div>
       <div class="form-row">
         <label for="f-date">발생일</label>
         <input type="date" id="f-date" required>
       </div>
       <div class="form-row">
-        <label for="f-line">호선</label>
-        <input type="text" id="f-line" placeholder="예: 2호선" required>
+        <label for="f-location">장소</label>
+        <input type="text" id="f-location" placeholder="예: 4호선 길음역 하선">
       </div>
       <div class="form-row">
-        <label for="f-summary">내용 요약</label>
-        <textarea id="f-summary" rows="4" required></textarea>
+        <label for="f-overview">장애(발생)개요</label>
+        <textarea id="f-overview" rows="3" required></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-cause">원인</label>
+        <textarea id="f-cause" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-countermeasures">재발방지 대책</label>
+        <textarea id="f-countermeasures" rows="4"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="f-extra">참고 (관련 표·현황 등, 선택)</label>
+        <textarea id="f-extra" rows="2"></textarea>
+      </div>
+      <div class="form-row">
+        <label for="photo-editor">관련사진 — 사진을 이 안으로 끌어다 놓고, 사진 밑에 바로 설명을 적으세요</label>
+        <div class="photo-editor-toolbar">
+          <button type="button" class="btn secondary small" id="btn-add-photo">+ 사진 추가</button>
+          <input type="file" id="f-photo-picker" accept="image/*" multiple style="display:none">
+        </div>
+        <div id="photo-editor" class="photo-editor" contenteditable="true"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" id="btn-cancel">취소</button>
         <button type="submit" class="btn">저장</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- 상세 화면 (목록에서 제목 클릭 시) -->
+<div class="modal-backdrop" id="detail-backdrop">
+  <div class="modal" id="detail-modal-box">
+    <div id="detail-body"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="btn-detail-close">닫기</button>
+    </div>
   </div>
 </div>
 
