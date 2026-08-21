@@ -2,6 +2,7 @@
 
 let currentTypeFilter = "all";
 let currentResults = [];
+const searchPager = { page: 0, pageSize: 10 };
 
 function renderFilters() {
   const mount = document.getElementById("search-filters");
@@ -15,6 +16,7 @@ function renderFilters() {
   mount.querySelectorAll("button").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentTypeFilter = btn.dataset.type;
+      searchPager.page = 0;
       renderFilters();
       runSearch();
     });
@@ -30,6 +32,7 @@ function runSearch() {
     currentResults = [];
     summary.textContent = "";
     results.innerHTML = "";
+    renderPagination("search-pager", searchPager, 0, runSearch);
     return;
   }
 
@@ -43,11 +46,13 @@ function runSearch() {
 
   if (all.length === 0) {
     results.innerHTML = `<div class="empty-state">일치하는 자료가 없습니다.</div>`;
+    renderPagination("search-pager", searchPager, 0, runSearch);
     return;
   }
 
   const base = getRootBase();
-  results.innerHTML = all
+  const pageItems = paginateList(all, searchPager);
+  results.innerHTML = pageItems
     .map(
       (r) => `
       <a class="search-result-card" href="${base}${r.path}">
@@ -57,6 +62,8 @@ function runSearch() {
       </a>`
     )
     .join("");
+
+  renderPagination("search-pager", searchPager, all.length, runSearch);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -64,7 +71,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFilters();
 
   const input = document.getElementById("search-input");
-  input.addEventListener("input", runSearch);
+  input.addEventListener("input", () => {
+    searchPager.page = 0;
+    runSearch();
+  });
 
   const params = new URLSearchParams(location.search);
   const q = params.get("q");

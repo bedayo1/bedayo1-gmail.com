@@ -37,15 +37,27 @@ function deleteAdminNotice(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const adminNoticePager = { page: 0, pageSize: 10 };
+const adminNoticeSearch = { field: "title", query: "" };
+
 function renderAdminNoticeList() {
   const tbody = document.getElementById("admin-notice-tbody");
+  const filtered = filterByTitleContent(adminNotices, adminNoticeSearch, (n) => n.title, (n) => n.content);
 
-  if (adminNotices.length === 0) {
+  renderListSearch("admin-notice-search", adminNoticeSearch, () => {
+    adminNoticePager.page = 0;
+    renderAdminNoticeList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 공지·지시사항이 없습니다.</div></td></tr>`;
+    renderPagination("admin-notice-pager", adminNoticePager, 0, renderAdminNoticeList);
     return;
   }
 
-  tbody.innerHTML = adminNotices
+  const pageItems = paginateList(filtered, adminNoticePager);
+
+  tbody.innerHTML = pageItems
     .map(
       (n) => `
       <tr>
@@ -65,6 +77,8 @@ function renderAdminNoticeList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteAdminNotice(btn.dataset.id));
   });
+
+  renderPagination("admin-notice-pager", adminNoticePager, filtered.length, renderAdminNoticeList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

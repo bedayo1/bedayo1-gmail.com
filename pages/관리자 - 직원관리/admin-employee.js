@@ -39,15 +39,32 @@ function deleteEmployee(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const employeePager = { page: 0, pageSize: 10 };
+const employeeSearch = { field: "title", query: "" };
+
 function renderEmployeeList() {
   const tbody = document.getElementById("admin-employee-tbody");
+  const filtered = filterByTitleContent(
+    employees,
+    employeeSearch,
+    (e) => e.name,
+    (e) => [e.empId, e.role, e.dept].filter(Boolean).join(" ")
+  );
 
-  if (employees.length === 0) {
+  renderListSearch("admin-employee-search", employeeSearch, () => {
+    employeePager.page = 0;
+    renderEmployeeList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 직원이 없습니다.</div></td></tr>`;
+    renderPagination("admin-employee-pager", employeePager, 0, renderEmployeeList);
     return;
   }
 
-  tbody.innerHTML = employees
+  const pageItems = paginateList(filtered, employeePager);
+
+  tbody.innerHTML = pageItems
     .map(
       (e) => `
       <tr>
@@ -69,6 +86,8 @@ function renderEmployeeList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteEmployee(btn.dataset.id));
   });
+
+  renderPagination("admin-employee-pager", employeePager, filtered.length, renderEmployeeList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

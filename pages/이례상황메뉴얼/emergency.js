@@ -62,15 +62,32 @@ function deleteEmergency(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const emergencyPager = { page: 0, pageSize: 10 };
+const emergencySearch = { field: "title", query: "" };
+
 function renderEmergencyList() {
   const tbody = document.getElementById("emergency-tbody");
+  const filtered = filterByTitleContent(
+    emergencies,
+    emergencySearch,
+    (e) => e.title,
+    (e) => [e.condition, (e.procedureSteps || []).join(" "), e.caution].filter(Boolean).join(" ")
+  );
 
-  if (emergencies.length === 0) {
+  renderListSearch("emergency-search", emergencySearch, () => {
+    emergencyPager.page = 0;
+    renderEmergencyList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 매뉴얼이 없습니다.</div></td></tr>`;
+    renderPagination("emergency-pager", emergencyPager, 0, renderEmergencyList);
     return;
   }
 
-  tbody.innerHTML = emergencies
+  const pageItems = paginateList(filtered, emergencyPager);
+
+  tbody.innerHTML = pageItems
     .map(
       (e) => `
       <tr>
@@ -93,6 +110,8 @@ function renderEmergencyList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteEmergency(btn.dataset.id));
   });
+
+  renderPagination("emergency-pager", emergencyPager, filtered.length, renderEmergencyList);
 }
 
 /* ---------- 모달 (상세/등록/수정 공용) ---------- */

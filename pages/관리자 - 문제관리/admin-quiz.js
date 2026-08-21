@@ -37,15 +37,27 @@ function deleteQuiz(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const quizPager = { page: 0, pageSize: 10 };
+const quizSearch = { field: "title", query: "" };
+
 function renderQuizList() {
   const tbody = document.getElementById("admin-quiz-tbody");
+  const filtered = filterByTitleContent(quizzes, quizSearch, (q) => q.question, (q) => q.answer);
 
-  if (quizzes.length === 0) {
+  renderListSearch("admin-quiz-search", quizSearch, () => {
+    quizPager.page = 0;
+    renderQuizList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 문제가 없습니다.</div></td></tr>`;
+    renderPagination("admin-quiz-pager", quizPager, 0, renderQuizList);
     return;
   }
 
-  tbody.innerHTML = quizzes
+  const pageItems = paginateList(filtered, quizPager);
+
+  tbody.innerHTML = pageItems
     .map(
       (q) => `
       <tr>
@@ -65,6 +77,8 @@ function renderQuizList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteQuiz(btn.dataset.id));
   });
+
+  renderPagination("admin-quiz-pager", quizPager, filtered.length, renderQuizList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

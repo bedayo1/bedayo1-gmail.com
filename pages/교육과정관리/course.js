@@ -45,15 +45,32 @@ function deleteCourse(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const coursePager = { page: 0, pageSize: 10 };
+const courseSearch = { field: "title", query: "" };
+
 function renderCourseList() {
   const tbody = document.getElementById("course-tbody");
+  const filtered = filterByTitleContent(
+    courses,
+    courseSearch,
+    (c) => c.name,
+    (c) => [c.target, STATUS_LABEL[c.status] ? STATUS_LABEL[c.status].text : ""].filter(Boolean).join(" ")
+  );
 
-  if (courses.length === 0) {
+  renderListSearch("course-search", courseSearch, () => {
+    coursePager.page = 0;
+    renderCourseList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 교육과정이 없습니다.</div></td></tr>`;
+    renderPagination("course-pager", coursePager, 0, renderCourseList);
     return;
   }
 
-  tbody.innerHTML = courses
+  const pageItems = paginateList(filtered, coursePager);
+
+  tbody.innerHTML = pageItems
     .map((c) => {
       const status = STATUS_LABEL[c.status] || STATUS_LABEL.planned;
       return `
@@ -76,6 +93,8 @@ function renderCourseList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteCourse(btn.dataset.id));
   });
+
+  renderPagination("course-pager", coursePager, filtered.length, renderCourseList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

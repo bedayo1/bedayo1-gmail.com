@@ -61,25 +61,43 @@ function renderVehicleTabs() {
   mount.querySelectorAll("button").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentVehicleFilter = btn.dataset.key;
+      malfunctionPager.page = 0;
       renderVehicleTabs();
       renderMalfunctionList();
     });
   });
 }
 
+const malfunctionPager = { page: 0, pageSize: 10 };
+const malfunctionSearch = { field: "title", query: "" };
+
 function renderMalfunctionList() {
   const tbody = document.getElementById("malfunction-tbody");
-  const list =
+  let list =
     currentVehicleFilter === "all"
       ? malfunctions
       : malfunctions.filter((m) => m.vehicleType === currentVehicleFilter);
+  list = filterByTitleContent(
+    list,
+    malfunctionSearch,
+    (m) => m.title,
+    (m) => [m.symptom, m.cause, m.procedure, m.notes].filter(Boolean).join(" ")
+  );
+
+  renderListSearch("malfunction-search", malfunctionSearch, () => {
+    malfunctionPager.page = 0;
+    renderMalfunctionList();
+  });
 
   if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">등록된 매뉴얼이 없습니다.</div></td></tr>`;
+    renderPagination("malfunction-pager", malfunctionPager, 0, renderMalfunctionList);
     return;
   }
 
-  tbody.innerHTML = list
+  const pageItems = paginateList(list, malfunctionPager);
+
+  tbody.innerHTML = pageItems
     .map(
       (m) => `
       <tr>
@@ -103,6 +121,8 @@ function renderMalfunctionList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteMalfunction(btn.dataset.id));
   });
+
+  renderPagination("malfunction-pager", malfunctionPager, list.length, renderMalfunctionList);
 }
 
 /* ---------- 상세 화면 (메인 > 고장처치 매뉴얼 > 제목 클릭 시) ---------- */

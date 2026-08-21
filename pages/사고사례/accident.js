@@ -42,16 +42,33 @@ function deleteAccident(id) {
 
 /* ---------- 렌더링 (목록) ---------- */
 
+const accidentPager = { page: 0, pageSize: 10 };
+const accidentSearch = { field: "title", query: "" };
+
 function renderAccidentList() {
   const tbody = document.getElementById("accident-tbody");
-  const sorted = [...accidents].sort((a, b) => (a.date < b.date ? 1 : -1));
+  let sorted = [...accidents].sort((a, b) => (a.date < b.date ? 1 : -1));
+  sorted = filterByTitleContent(
+    sorted,
+    accidentSearch,
+    (a) => a.title,
+    (a) => [a.overview, a.cause, a.countermeasures, a.location].filter(Boolean).join(" ")
+  );
+
+  renderListSearch("accident-search", accidentSearch, () => {
+    accidentPager.page = 0;
+    renderAccidentList();
+  });
 
   if (sorted.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 사고사례가 없습니다.</div></td></tr>`;
+    renderPagination("accident-pager", accidentPager, 0, renderAccidentList);
     return;
   }
 
-  tbody.innerHTML = sorted
+  const pageItems = paginateList(sorted, accidentPager);
+
+  tbody.innerHTML = pageItems
     .map(
       (a) => `
       <tr>
@@ -76,6 +93,8 @@ function renderAccidentList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteAccident(btn.dataset.id));
   });
+
+  renderPagination("accident-pager", accidentPager, sorted.length, renderAccidentList);
 }
 
 /* ---------- 상세 화면: 운전정보 발간물 원본을 흉내낸 레이아웃 ---------- */

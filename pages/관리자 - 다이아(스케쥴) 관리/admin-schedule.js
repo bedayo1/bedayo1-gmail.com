@@ -37,15 +37,32 @@ function deleteSchedule(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const schedulePager = { page: 0, pageSize: 10 };
+const scheduleSearch = { field: "title", query: "" };
+
 function renderScheduleList() {
   const tbody = document.getElementById("admin-schedule-tbody");
+  const filtered = filterByTitleContent(
+    schedules,
+    scheduleSearch,
+    (s) => `${s.line} ${s.diaNo}호`,
+    (s) => [s.startTime, s.stations ? `${s.stations}개` : ""].filter(Boolean).join(" ")
+  );
 
-  if (schedules.length === 0) {
+  renderListSearch("admin-schedule-search", scheduleSearch, () => {
+    schedulePager.page = 0;
+    renderScheduleList();
+  });
+
+  if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 다이아가 없습니다.</div></td></tr>`;
+    renderPagination("admin-schedule-pager", schedulePager, 0, renderScheduleList);
     return;
   }
 
-  tbody.innerHTML = schedules
+  const pageItems = paginateList(filtered, schedulePager);
+
+  tbody.innerHTML = pageItems
     .map(
       (s) => `
       <tr>
@@ -67,6 +84,8 @@ function renderScheduleList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteSchedule(btn.dataset.id));
   });
+
+  renderPagination("admin-schedule-pager", schedulePager, filtered.length, renderScheduleList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

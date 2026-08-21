@@ -36,16 +36,28 @@ function deletePost(id) {
 
 /* ---------- 렌더링 ---------- */
 
+const postPager = { page: 0, pageSize: 10 };
+const postSearch = { field: "title", query: "" };
+
 function renderPostList() {
   const tbody = document.getElementById("board-tbody");
+  let reversed = [...posts].reverse();
+  reversed = filterByTitleContent(reversed, postSearch, (p) => p.title, (p) => p.content);
 
-  if (posts.length === 0) {
+  renderListSearch("board-search", postSearch, () => {
+    postPager.page = 0;
+    renderPostList();
+  });
+
+  if (reversed.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">등록된 게시글이 없습니다.</div></td></tr>`;
+    renderPagination("board-pager", postPager, 0, renderPostList);
     return;
   }
 
-  tbody.innerHTML = [...posts]
-    .reverse()
+  const pageItems = paginateList(reversed, postPager);
+
+  tbody.innerHTML = pageItems
     .map(
       (p) => `
       <tr>
@@ -66,6 +78,8 @@ function renderPostList() {
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deletePost(btn.dataset.id));
   });
+
+  renderPagination("board-pager", postPager, reversed.length, renderPostList);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

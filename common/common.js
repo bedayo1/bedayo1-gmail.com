@@ -271,6 +271,133 @@ function renderAttachmentList(attachments) {
   return `<div class="attachment-list">${items}</div>`;
 }
 
+/* ---------- 목록 검색(제목/내용 선택) — 모든 목록형 페이지 공용 ---------- */
+/* 사용법:
+     const xxxSearch = { field: "title", query: "" };
+     function renderXxxList() {
+       let list = ...(탭 등 다른 필터 적용)...;
+       list = filterByTitleContent(list, xxxSearch, (x) => x.title, (x) => x.content);
+       renderListSearch("xxx-search", xxxSearch, renderXxxList);
+       ...(list 를 페이징해서 렌더링)...
+     }
+   검색어/필드가 바뀌면 renderListSearch 내부에서 자동으로 pager.page 리셋용 onChange(=render 함수)를 다시 호출한다.
+   render 함수 안에서 pager.page = 0 리셋은 검색 change 핸들러 쪽에서 처리되므로, 페이지 쪽에서는
+   검색 input을 건드릴 때 pager도 함께 0으로 리셋해주면 된다(아래 renderListSearch 참고). */
+
+function filterByTitleContent(list, search, getTitle, getContent) {
+  const q = (search.query || "").trim().toLowerCase();
+  if (!q) return list;
+  return list.filter((item) => {
+    const hay = search.field === "content" ? getContent(item) : getTitle(item);
+    return (hay || "").toLowerCase().includes(q);
+  });
+}
+
+function renderListSearch(containerId, search, onChange) {
+  const mount = document.getElementById(containerId);
+  if (!mount) return;
+
+  // 이미 그려져 있으면(같은 페이지 재렌더 시) input을 새로 만들지 않고 값만 유지 — 매 렌더마다 다시 그리면 포커스가 끊긴다.
+  if (mount.dataset.wired === "1") return;
+  mount.dataset.wired = "1";
+
+  mount.innerHTML = `
+    <select id="${containerId}-field" class="list-search-field">
+      <option value="title" ${search.field === "title" ? "selected" : ""}>제목</option>
+      <option value="content" ${search.field === "content" ? "selected" : ""}>내용</option>
+    </select>
+    <input type="text" id="${containerId}-input" class="list-search-input" placeholder="검색어를 입력하세요" value="${search.query || ""}">
+  `;
+
+  mount.querySelector(`#${containerId}-field`).addEventListener("change", (e) => {
+    search.field = e.target.value;
+    onChange();
+  });
+  mount.querySelector(`#${containerId}-input`).addEventListener("input", (e) => {
+    search.query = e.target.value;
+    onChange();
+  });
+}
+
+/* ---------- 목록 페이징 (모든 목록형 페이지 공용) ---------- */
+/* 사용법:
+     const xxxPager = { page: 0, pageSize: 10 };
+     function renderXxxList() {
+       const filtered = ...(검색/탭 필터링 결과)...;
+       const pageItems = paginateList(filtered, xxxPager);
+       tbody.innerHTML = pageItems.map(...).join("");
+       ...(pageItems 기준으로 클릭 핸들러 연결)...
+       renderPagination("xxx-pager", xxxPager, filtered.length, renderXxxList);
+     }
+   필터가 바뀌는 지점(검색어 입력, 탭 클릭 등)에서는 pager.page = 0 으로 리셋할 것. */
+
+const PAGE_SIZE_OPTIONS = [10, 50, 100];
+
+function paginateList(list, pager) {
+  const start = pager.page * pager.pageSize;
+  return list.slice(start, start + pager.pageSize);
+}
+
+function renderPagination(containerId, pager, totalItems, onChange) {
+  const mount = document.getElementById(containerId);
+  if (!mount) return;
+
+  if (totalItems === 0) {
+    mount.innerHTML = "";
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / pager.pageSize));
+  if (pager.page > totalPages - 1) pager.page = totalPages - 1;
+  if (pager.page < 0) pager.page = 0;
+
+  const windowSize = 7;
+  let startPage = Math.max(0, pager.page - Math.floor(windowSize / 2));
+  let endPage = Math.min(totalPages - 1, startPage + windowSize - 1);
+  startPage = Math.max(0, endPage - windowSize + 1);
+
+  const pageBtns = [];
+  for (let p = startPage; p <= endPage; p++) {
+    pageBtns.push(
+      `<button type="button" class="${p === pager.page ? "active" : ""}" data-page="${p}">${p + 1}</button>`
+    );
+  }
+
+  mount.innerHTML = `
+    <div class="pagination-size">
+      <label for="${containerId}-size">표시 개수</label>
+      <select id="${containerId}-size">
+        ${PAGE_SIZE_OPTIONS.map(
+          (s) => `<option value="${s}" ${s === pager.pageSize ? "selected" : ""}>${s}개씩</option>`
+        ).join("")}
+      </select>
+    </div>
+    <div class="pagination-pages">
+      <button type="button" data-page="0" ${pager.page === 0 ? "disabled" : ""}>처음</button>
+      <button type="button" data-page="${pager.page - 1}" ${pager.page === 0 ? "disabled" : ""}>이전</button>
+      ${pageBtns.join("")}
+      <button type="button" data-page="${pager.page + 1}" ${pager.page >= totalPages - 1 ? "disabled" : ""}>다음</button>
+      <button type="button" data-page="${totalPages - 1}" ${pager.page >= totalPages - 1 ? "disabled" : ""}>마지막</button>
+    </div>
+    <div class="pagination-info">총 ${totalItems}건 · ${pager.page + 1}/${totalPages}페이지</div>
+  `;
+
+  mount.querySelectorAll("button[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = Number(btn.dataset.page);
+      if (p < 0 || p >= totalPages || p === pager.page) return;
+      pager.page = p;
+      onChange();
+    });
+  });
+
+  mount.querySelector(`#${containerId}-size`).addEventListener("change", (e) => {
+    pager.pageSize = Number(e.target.value);
+    pager.page = 0;
+    onChange();
+  });
+}
+
 /* ---------- 네비게이션 ---------- */
 
 function getRootBase() {
