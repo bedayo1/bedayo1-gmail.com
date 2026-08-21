@@ -136,6 +136,20 @@
   white-space: pre-wrap;
 }
 
+.bulletin-diagram {
+  margin: 8px 0 16px;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.bulletin-diagram img {
+  display: block;
+  width: 100%;
+  cursor: zoom-in;
+}
+
 .bulletin-side {
   border-left: 1px solid var(--color-border);
   padding-left: 16px;
