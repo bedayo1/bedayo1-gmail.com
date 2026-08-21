@@ -120,15 +120,12 @@ function renderDetailPhoto(item) {
   const photos = item.photos || [];
   if (photos.length === 0 && !item.photoImage && !item.photoNote) return "";
 
-  // 사진마다 개별 캡션이 확보된 경우에만 사진 밑에 기기명을 표시한다.
-  const hasPerPhotoCaption = photos.length > 0 && photos.every((p) => p.caption);
-
   const gallery = photos
     .map(
       (p) => `
       <a href="${p.file}" target="_blank" class="detail-photo-item">
         <img class="detail-photo-thumb" src="${p.file}" alt="${p.caption || "관련사진"}">
-        ${hasPerPhotoCaption ? `<span class="detail-photo-caption">${p.caption}</span>` : ""}
+        ${p.caption ? `<span class="detail-photo-caption">${p.caption}</span>` : ""}
       </a>`
     )
     .join("");
@@ -137,8 +134,10 @@ function renderDetailPhoto(item) {
     ? `<img class="detail-photo" src="${item.photoImage}" alt="추가 등록 사진">`
     : "";
 
-  // 개별 캡션을 못 붙인 경우에만, 원문 설명 전체를 아래에 그대로 보여준다.
-  const caption = !hasPerPhotoCaption && item.photoNote ? `<p>${item.photoNote}</p>` : "";
+  // 사진마다 붙은 개별 설명이 하나도 없을 때만(=매칭이 불확실해 비워둔 경우 포함),
+  // 원문 설명 전체를 텍스트로 보여준다. 하나라도 있으면 사진별 설명을 우선한다.
+  const anyCaptioned = photos.some((p) => p.caption);
+  const caption = !anyCaptioned && item.photoNote ? `<p>${item.photoNote}</p>` : "";
 
   return `
     <div class="detail-section">
@@ -175,24 +174,53 @@ function closeDetail() {
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
+/* 관련사진 입력: 네이버 카페 글쓰기처럼 사진을 끌어다 놓으면 그 자리에 사진이 삽입되고,
+   바로 밑에 설명을 적을 수 있는 한 줄이 함께 생긴다. */
 
-let pendingPhotoImage = "";
+function insertPhotoBlock(dataUrl, captionText) {
+  const editor = document.getElementById("photo-editor");
 
-function renderPhotoPreview() {
-  const wrap = document.getElementById("photo-preview-wrap");
-  if (!pendingPhotoImage) {
-    wrap.innerHTML = "";
-    return;
-  }
-  wrap.innerHTML = `
-    <img src="${pendingPhotoImage}" alt="미리보기">
-    <button type="button" class="btn secondary small" id="btn-remove-photo">사진 삭제</button>
-  `;
-  document.getElementById("btn-remove-photo").addEventListener("click", () => {
-    pendingPhotoImage = "";
-    document.getElementById("f-photofile").value = "";
-    renderPhotoPreview();
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  editor.appendChild(img);
+
+  const caption = document.createElement("div");
+  caption.className = "photo-editor-caption";
+  caption.contentEditable = "true";
+  caption.textContent = captionText || "";
+  editor.appendChild(caption);
+
+  caption.focus();
+}
+
+function handlePhotoFiles(fileList) {
+  Array.from(fileList || []).forEach((file) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => insertPhotoBlock(reader.result, "");
+    reader.readAsDataURL(file);
   });
+}
+
+function populatePhotoEditor(photos) {
+  const editor = document.getElementById("photo-editor");
+  editor.innerHTML = "";
+  (photos || []).forEach((p) => insertPhotoBlock(p.file, p.caption || ""));
+  editor.blur();
+}
+
+function collectPhotosFromEditor() {
+  const editor = document.getElementById("photo-editor");
+  const photos = [];
+  editor.querySelectorAll("img").forEach((img) => {
+    let captionText = "";
+    const next = img.nextElementSibling;
+    if (next && next.classList.contains("photo-editor-caption")) {
+      captionText = next.textContent.trim();
+    }
+    photos.push({ file: img.getAttribute("src"), caption: captionText });
+  });
+  return photos;
 }
 
 function openModal(id) {
@@ -209,10 +237,8 @@ function openModal(id) {
   document.getElementById("f-state").value = item ? item.state || "" : "";
   document.getElementById("f-reference").value = item ? item.reference || "" : "";
   document.getElementById("f-notes").value = item ? item.notes || "" : "";
-  document.getElementById("f-photonote").value = item ? item.photoNote || "" : "";
-  document.getElementById("f-photofile").value = "";
-  pendingPhotoImage = item ? item.photoImage || "" : "";
-  renderPhotoPreview();
+  document.getElementById("f-photo-picker").value = "";
+  populatePhotoEditor(item ? item.photos : []);
   title.textContent = item ? "매뉴얼 수정" : "매뉴얼 추가";
 
   backdrop.classList.add("open");
@@ -240,15 +266,38 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });
 
-  document.getElementById("f-photofile").addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingPhotoImage = reader.result;
-      renderPhotoPreview();
-    };
-    reader.readAsDataURL(file);
+  const photoEditor = document.getElementById("photo-editor");
+
+  document.getElementById("btn-add-photo").addEventListener("click", () => {
+    document.getElementById("f-photo-picker").click();
+  });
+
+  document.getElementById("f-photo-picker").addEventListener("change", (e) => {
+    handlePhotoFiles(e.target.files);
+    e.target.value = "";
+  });
+
+  photoEditor.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    photoEditor.classList.add("dragover");
+  });
+  photoEditor.addEventListener("dragleave", () => {
+    photoEditor.classList.remove("dragover");
+  });
+  photoEditor.addEventListener("drop", (e) => {
+    e.preventDefault();
+    photoEditor.classList.remove("dragover");
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      handlePhotoFiles(e.dataTransfer.files);
+    }
+  });
+  // contenteditable 안에서 이미지 붙여넣기도 지원
+  photoEditor.addEventListener("paste", (e) => {
+    const items = Array.from(e.clipboardData?.items || []);
+    const imageItems = items.filter((it) => it.type.startsWith("image/"));
+    if (imageItems.length === 0) return;
+    e.preventDefault();
+    handlePhotoFiles(imageItems.map((it) => it.getAsFile()));
   });
 
   document.getElementById("malfunction-form").addEventListener("submit", (e) => {
@@ -263,8 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
       state: document.getElementById("f-state").value.trim(),
       reference: document.getElementById("f-reference").value.trim(),
       notes: document.getElementById("f-notes").value.trim(),
-      photoNote: document.getElementById("f-photonote").value.trim(),
-      photoImage: pendingPhotoImage,
+      photos: collectPhotosFromEditor(),
     };
 
     if (id) {

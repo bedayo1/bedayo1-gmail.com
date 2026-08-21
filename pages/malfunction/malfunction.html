@@ -42,7 +42,7 @@
 
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal" style="max-width:560px;">
+  <div class="modal" id="edit-modal-box">
     <h2 class="page-title" style="font-size:18px;" id="modal-title">매뉴얼 추가</h2>
     <form id="malfunction-form">
       <input type="hidden" id="f-id">
@@ -83,13 +83,12 @@
         <textarea id="f-notes" rows="2"></textarea>
       </div>
       <div class="form-row">
-        <label for="f-photonote">[관련사진] (사진 설명)</label>
-        <textarea id="f-photonote" rows="2"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="f-photofile">관련사진 업로드</label>
-        <input type="file" id="f-photofile" accept="image/*">
-        <div id="photo-preview-wrap"></div>
+        <label for="photo-editor">[관련사진] — 사진을 이 안으로 끌어다 놓고, 사진 밑에 바로 설명을 적으세요</label>
+        <div class="photo-editor-toolbar">
+          <button type="button" class="btn secondary small" id="btn-add-photo">+ 사진 추가</button>
+          <input type="file" id="f-photo-picker" accept="image/*" multiple style="display:none">
+        </div>
+        <div id="photo-editor" class="photo-editor" contenteditable="true"></div>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" id="btn-cancel">취소</button>
