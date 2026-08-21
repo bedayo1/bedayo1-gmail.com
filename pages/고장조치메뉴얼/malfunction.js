@@ -148,6 +148,16 @@ function renderDetailPhoto(item) {
     </div>`;
 }
 
+function renderDetailVideos(item) {
+  const videos = item.videos || [];
+  if (videos.length === 0) return "";
+  return `
+    <div class="detail-section">
+      <h4>관련 동영상</h4>
+      ${renderVideoGallery(videos)}
+    </div>`;
+}
+
 function openDetail(id) {
   const item = getMalfunction(id);
   if (!item) return;
@@ -165,6 +175,7 @@ function openDetail(id) {
     ${renderDetailSection("참고", item.reference)}
     ${renderDetailSection("※ 주의사항", item.notes)}
     ${renderDetailPhoto(item)}
+    ${renderDetailVideos(item)}
   `;
   document.getElementById("detail-backdrop").classList.add("open");
 }
@@ -239,6 +250,7 @@ function openModal(id) {
   document.getElementById("f-notes").value = item ? item.notes || "" : "";
   document.getElementById("f-photo-picker").value = "";
   populatePhotoEditor(item ? item.photos : []);
+  document.getElementById("f-videos").value = item ? videosToText(item.videos) : "";
   title.textContent = item ? "매뉴얼 수정" : "매뉴얼 추가";
 
   backdrop.classList.add("open");
@@ -313,6 +325,7 @@ document.addEventListener("DOMContentLoaded", () => {
       reference: document.getElementById("f-reference").value.trim(),
       notes: document.getElementById("f-notes").value.trim(),
       photos: collectPhotosFromEditor(),
+      videos: parseVideosText(document.getElementById("f-videos").value),
     };
 
     if (id) {

@@ -276,6 +276,31 @@ body {
   text-decoration: underline;
 }
 
+/* ---------- 관련 동영상 (여러 페이지 상세보기에서 공용) ---------- */
+
+.detail-video-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.detail-video-item video {
+  width: 100%;
+  max-height: 360px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: #000;
+  display: block;
+}
+
+.detail-video-caption {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* ---------- 사이드바 ---------- */
 .site-sidebar {
   grid-area: sidebar;

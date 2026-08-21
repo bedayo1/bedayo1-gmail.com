@@ -136,6 +136,11 @@ function openDetail(id) {
             ? `<div class="side-block"><h4>3. 관련 사진</h4><div class="bulletin-photo-gallery">${gallery}</div></div>`
             : ""
         }
+        ${
+          item.videos && item.videos.length
+            ? `<div class="side-block"><h4>4. 관련 동영상</h4>${renderVideoGallery(item.videos)}</div>`
+            : ""
+        }
       </div>
     </div>
   `;
@@ -212,6 +217,7 @@ function openModal(id) {
   document.getElementById("f-extra").value = item ? item.extra || "" : "";
   document.getElementById("f-photo-picker").value = "";
   populatePhotoEditor(item ? item.photos : []);
+  document.getElementById("f-videos").value = item ? videosToText(item.videos) : "";
   title.textContent = item ? "사고사례 수정" : "사고사례 추가";
 
   backdrop.classList.add("open");
@@ -285,6 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
       countermeasures: document.getElementById("f-countermeasures").value.trim(),
       extra: document.getElementById("f-extra").value.trim(),
       photos: collectPhotosFromEditor(),
+      videos: parseVideosText(document.getElementById("f-videos").value),
     };
 
     if (id) {

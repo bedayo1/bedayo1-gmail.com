@@ -218,6 +218,42 @@ function searchAll(query, limit) {
   return typeof limit === "number" ? scored.slice(0, limit) : scored;
 }
 
+/* ---------- 관련 동영상 (경로 텍스트 ↔ 배열 변환) ---------- */
+/* 동영상은 용량이 커서 localStorage(사진처럼 base64로 저장)에 담기 어렵다.
+   그래서 페이지 폴더 안에 파일을 직접 넣어두고, "경로 | 설명" 한 줄짜리 텍스트로만 관리한다. */
+
+function parseVideosText(text) {
+  return (text || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [file, ...rest] = line.split("|");
+      return { file: file.trim(), caption: rest.join("|").trim() };
+    })
+    .filter((v) => v.file);
+}
+
+function videosToText(videos) {
+  return (videos || [])
+    .map((v) => (v.caption ? `${v.file} | ${v.caption}` : v.file))
+    .join("\n");
+}
+
+function renderVideoGallery(videos) {
+  if (!videos || videos.length === 0) return "";
+  const items = videos
+    .map(
+      (v) => `
+      <div class="detail-video-item">
+        <video src="${v.file}" controls preload="metadata"></video>
+        ${v.caption ? `<span class="detail-video-caption">${v.caption}</span>` : ""}
+      </div>`
+    )
+    .join("");
+  return `<div class="detail-video-gallery">${items}</div>`;
+}
+
 /* ---------- 네비게이션 ---------- */
 
 function getRootBase() {
