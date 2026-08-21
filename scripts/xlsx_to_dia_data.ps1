@@ -33,7 +33,8 @@ param(
   [Parameter(Mandatory=$true)][string]$XlsxPath,
   [Parameter(Mandatory=$true)][string]$OutDir,
   [string]$DepotKey = "신답승무사업소",
-  [string]$DataJsOut = ""   # 지정하면 pages/다이아/data/dia-data-<사업소>.js 형태로 통합 JS 데이터도 생성
+  [string]$DataJsOut = "",   # 지정하면 pages/다이아/data/dia-data-<사업소>.js 형태로 통합 JS 데이터도 생성
+  [int]$RowsPerPage = 45     # 한 페이지에 담을 대략적인 데이터 행 수 (병합된 행 블록은 쪼개지 않음)
 )
 
 $ErrorActionPreference = "Stop"
@@ -307,44 +308,99 @@ foreach ($sheetNode in $wb.workbook.sheets.sheet) {
     }
   }
 
-  $html = New-Object System.Text.StringBuilder
-  [void]$html.AppendLine("<table class=`"dia-table`">")
-  [void]$html.Append("<colgroup>")
-  for ($c = 1; $c -le $maxCol; $c++) {
-    $w = if ($colWidths.ContainsKey($c)) { $colWidths[$c] } else { 40 }
-    [void]$html.Append("<col style=`"width:${w}px`">")
-  }
-  [void]$html.AppendLine("</colgroup>")
-
-  for ($r = 1; $r -le $maxRow; $r++) {
-    $rh = if ($rowHeights.ContainsKey($r)) { $rowHeights[$r] } else { 22 }
-    [void]$html.AppendLine("<tr style=`"height:${rh}px`">")
-    for ($c = 1; $c -le $maxCol; $c++) {
-      $key = "$c,$r"
-      if ($mergedAway.ContainsKey($key)) { continue }
-      $cell = $grid[$key]
-      $val = if ($cell) { $cell.text } else { "" }
-      $styleIdx = if ($cell) { $cell.style } else { 0 }
-      if ($val -eq $null) { $val = "" }
-      $attrs = ""
-      if ($mergeAnchorSpan.ContainsKey($key)) {
-        $span = $mergeAnchorSpan[$key]
-        if ($span.rowspan -gt 1) { $attrs += " rowspan=`"$($span.rowspan)`"" }
-        if ($span.colspan -gt 1) { $attrs += " colspan=`"$($span.colspan)`"" }
-      }
-      $cssStyle = Build-CellStyle $styleIdx
-      if ($cssStyle) { $attrs += " style=`"$cssStyle`"" }
-      $escaped = [System.Web.HttpUtility]::HtmlEncode($val) -replace "`n", "<br>"
-      [void]$html.AppendLine("<td$attrs>$escaped</td>")
+  # ---- 행 그룹(운행 블록) 경계 계산: 병합된 셀 블록 중간을 잘라서는 안 되므로,
+  #      "안전하게 자를 수 있는 위치"(어떤 병합도 걸쳐있지 않은 행 경계)만 페이지 경계로 사용한다.
+  $unsafeAfter = @{}
+  foreach ($span in $mergeAnchorSpan.Values) { }
+  foreach ($key in $mergeAnchorSpan.Keys) {
+    $span = $mergeAnchorSpan[$key]
+    if ($span.rowspan -gt 1) {
+      $rParts = $key -split ","
+      $r1 = [int]$rParts[1]
+      $r2 = $r1 + $span.rowspan - 1
+      for ($rr = $r1; $rr -lt $r2; $rr++) { $unsafeAfter[$rr] = $true }
     }
-    [void]$html.AppendLine("</tr>")
   }
-  [void]$html.AppendLine("</table>")
 
-  $outPath = Join-Path $OutDir "table_$sheetName.html"
-  [System.IO.File]::WriteAllText($outPath, $html.ToString(), [System.Text.Encoding]::UTF8)
-  $sheetHtmlByName[$sheetName] = $html.ToString()
-  Write-Output "$sheetName : rows=$maxRow cols=$maxCol -> $outPath"
+  # 맨 위 제목/사업소/날짜 등 머리글 행 수 = 1열(번호 칸)에 첫 rowspan 병합이 시작되는 행의 바로 앞까지
+  $firstDataRow = $maxRow + 1
+  foreach ($key in $mergeAnchorSpan.Keys) {
+    $parts2 = $key -split ","
+    $cIdx2 = [int]$parts2[0]; $rIdx2 = [int]$parts2[1]
+    if ($cIdx2 -eq 1 -and $mergeAnchorSpan[$key].rowspan -gt 1 -and $rIdx2 -lt $firstDataRow) { $firstDataRow = $rIdx2 }
+  }
+  $headerRowEnd = if ($firstDataRow -le $maxRow) { $firstDataRow - 1 } else { 0 }
+
+  function Render-Rows($html, $rowNums) {
+    foreach ($r in $rowNums) {
+      $rh = if ($rowHeights.ContainsKey($r)) { $rowHeights[$r] } else { 22 }
+      [void]$html.AppendLine("<tr style=`"height:${rh}px`">")
+      for ($c = 1; $c -le $maxCol; $c++) {
+        $key = "$c,$r"
+        if ($mergedAway.ContainsKey($key)) { continue }
+        $cell = $grid[$key]
+        $val = if ($cell) { $cell.text } else { "" }
+        $styleIdx = if ($cell) { $cell.style } else { 0 }
+        if ($val -eq $null) { $val = "" }
+        $attrs = ""
+        if ($mergeAnchorSpan.ContainsKey($key)) {
+          $span = $mergeAnchorSpan[$key]
+          if ($span.rowspan -gt 1) { $attrs += " rowspan=`"$($span.rowspan)`"" }
+          if ($span.colspan -gt 1) { $attrs += " colspan=`"$($span.colspan)`"" }
+        }
+        $cssStyle = Build-CellStyle $styleIdx
+        if ($cssStyle) { $attrs += " style=`"$cssStyle`"" }
+        $escaped = [System.Web.HttpUtility]::HtmlEncode($val) -replace "`n", "<br>"
+        [void]$html.AppendLine("<td$attrs>$escaped</td>")
+      }
+      [void]$html.AppendLine("</tr>")
+    }
+  }
+
+  $pages = New-Object System.Collections.Generic.List[string]
+  $cursor = $headerRowEnd + 1
+  while ($cursor -le $maxRow) {
+    $pageEnd = [Math]::Min($cursor + $RowsPerPage - 1, $maxRow)
+    while ($pageEnd -lt $maxRow -and $unsafeAfter.ContainsKey($pageEnd)) { $pageEnd++ }
+
+    $html = New-Object System.Text.StringBuilder
+    [void]$html.AppendLine("<table class=`"dia-table`">")
+    [void]$html.Append("<colgroup>")
+    for ($c = 1; $c -le $maxCol; $c++) {
+      $w = if ($colWidths.ContainsKey($c)) { $colWidths[$c] } else { 40 }
+      [void]$html.Append("<col style=`"width:${w}px`">")
+    }
+    [void]$html.AppendLine("</colgroup>")
+
+    if ($headerRowEnd -ge 1) { Render-Rows $html (1..$headerRowEnd) }
+    Render-Rows $html ($cursor..$pageEnd)
+
+    [void]$html.AppendLine("</table>")
+    $pages.Add($html.ToString())
+
+    $cursor = $pageEnd + 1
+  }
+  if ($pages.Count -eq 0) {
+    # 데이터 행이 없으면(혹은 병합 정보가 없으면) 전체를 한 페이지로
+    $html = New-Object System.Text.StringBuilder
+    [void]$html.AppendLine("<table class=`"dia-table`">")
+    [void]$html.Append("<colgroup>")
+    for ($c = 1; $c -le $maxCol; $c++) {
+      $w = if ($colWidths.ContainsKey($c)) { $colWidths[$c] } else { 40 }
+      [void]$html.Append("<col style=`"width:${w}px`">")
+    }
+    [void]$html.AppendLine("</colgroup>")
+    Render-Rows $html (1..$maxRow)
+    [void]$html.AppendLine("</table>")
+    $pages.Add($html.ToString())
+  }
+
+  for ($pi = 0; $pi -lt $pages.Count; $pi++) {
+    $outPath = Join-Path $OutDir ("table_{0}_p{1}.html" -f $sheetName, ($pi + 1))
+    [System.IO.File]::WriteAllText($outPath, $pages[$pi], [System.Text.Encoding]::UTF8)
+  }
+  $sheetHtmlByName[$sheetName] = $pages
+  Write-Output "$sheetName : rows=$maxRow cols=$maxCol -> $($pages.Count)페이지 (헤더행 1-$headerRowEnd 고정 반복)"
  } catch {
    Write-Output "ERROR in sheet $($sheetNode.name): $($_.Exception.Message) at line $($_.InvocationInfo.ScriptLineNumber): $($_.InvocationInfo.Line.Trim())"
  }
