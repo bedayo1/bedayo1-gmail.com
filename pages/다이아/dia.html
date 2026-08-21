@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 다이아</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./dia.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">다이아</h1>
+  <p class="page-desc">사업소 · 근무(평일/휴일/평평/휴평/평휴/휴휴)별 행로표(다이아)를 원본 그대로 확인합니다.</p>
+
+  <section class="card">
+    <div class="depot-tabs" id="depot-tabs"></div>
+    <div class="duty-tabs" id="duty-tabs"></div>
+
+    <div class="dia-scroll" id="dia-table-mount">
+      <div class="empty-state">불러올 다이아 데이터가 없습니다.</div>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="../../common/common.js"></script>
+<script src="./data/dia-data-신답승무사업소.js"></script>
+<script src="./dia.js"></script>
+</body>
+</html>

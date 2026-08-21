@@ -1,0 +1,59 @@
+/* dia.html 전용 스타일 (다이아 페이지에서만 사용) */
+
+.depot-tabs,
+.duty-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.duty-tabs {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.depot-tabs button,
+.duty-tabs button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.depot-tabs button.active,
+.duty-tabs button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+.dia-scroll {
+  overflow: auto;
+  max-width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 12px;
+}
+
+.dia-scroll .dia-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-family: "Malgun Gothic", "맑은 고딕", sans-serif;
+  font-size: 11px;
+  color: #111;
+}
+
+.dia-scroll .dia-table td {
+  padding: 1px 2px;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+  vertical-align: middle;
+}

@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { key: "chatbot", label: "AI챗봇", path: "pages/AI챗봇/chatbot.html", icon: "🤖", group: "main" },
   { key: "course", label: "교육과정 관리", path: "pages/교육과정관리/course.html", icon: "📚", group: "main" },
   { key: "accident", label: "사고사례", path: "pages/사고사례/accident.html", icon: "📋", group: "main" },
-  { key: "driveinfo", label: "운전정보", path: "pages/운전정보/driveinfo.html", icon: "📰", group: "main" },
+  { key: "dia", label: "다이아", path: "pages/다이아/dia.html", icon: "🚆", group: "main" },
   { key: "malfunction", label: "고장처치 매뉴얼", path: "pages/고장조치메뉴얼/malfunction.html", icon: "🔧", group: "main" },
   { key: "emergency", label: "이례상황 매뉴얼", path: "pages/이례상황메뉴얼/emergency.html", icon: "🚨", group: "main" },
   { key: "board", label: "자유게시판", path: "pages/자유게시판/board.html", icon: "💬", group: "main" },
@@ -114,14 +114,6 @@ const SEARCH_SOURCES = [
     path: "pages/사고사례/accident.html",
     getTitle: (x) => x.title,
     getText: (x) => [x.title, x.line, x.location, x.overview, x.cause, x.countermeasures].join(" "),
-  },
-  {
-    key: "driveinfos",
-    type: "운전정보",
-    icon: "📰",
-    path: "pages/운전정보/driveinfo.html",
-    getTitle: (x) => x.title,
-    getText: (x) => [x.title, x.author, x.depot, x.content].join(" "),
   },
   {
     key: "malfunctions",
