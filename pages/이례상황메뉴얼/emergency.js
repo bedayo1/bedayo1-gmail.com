@@ -78,20 +78,21 @@ function renderEmergencyList() {
     emergencyPager.page = 0;
     renderEmergencyList();
   });
+  const skipPaging = !!emergencySearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 매뉴얼이 없습니다.</div></td></tr>`;
-    renderPagination("emergency-pager", emergencyPager, 0, renderEmergencyList);
+    renderPaginationOrAll("emergency-pager", emergencyPager, 0, renderEmergencyList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, emergencyPager);
+  const pageItems = paginateListOrAll(filtered, emergencyPager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (e) => `
       <tr>
-        <td><button type="button" class="link-title" data-action="detail" data-id="${e.id}">${e.title}</button></td>
+        <td class="title-cell"><button type="button" class="link-title" data-action="detail" data-id="${e.id}">${e.title}</button></td>
         <td><span class="badge danger">${e.category}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${e.id}">수정</button>
@@ -111,7 +112,7 @@ function renderEmergencyList() {
     btn.addEventListener("click", () => deleteEmergency(btn.dataset.id));
   });
 
-  renderPagination("emergency-pager", emergencyPager, filtered.length, renderEmergencyList);
+  renderPaginationOrAll("emergency-pager", emergencyPager, filtered.length, renderEmergencyList, skipPaging);
 }
 
 /* ---------- 모달 (상세/등록/수정 공용) ---------- */
@@ -142,6 +143,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("emergency");
   renderEmergencyList();
+  onViewportChange(renderEmergencyList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

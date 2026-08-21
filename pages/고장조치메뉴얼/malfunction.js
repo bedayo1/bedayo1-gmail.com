@@ -88,20 +88,21 @@ function renderMalfunctionList() {
     malfunctionPager.page = 0;
     renderMalfunctionList();
   });
+  const skipPaging = !!malfunctionSearch.query.trim() || isAppViewport();
 
   if (list.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">등록된 매뉴얼이 없습니다.</div></td></tr>`;
-    renderPagination("malfunction-pager", malfunctionPager, 0, renderMalfunctionList);
+    renderPaginationOrAll("malfunction-pager", malfunctionPager, 0, renderMalfunctionList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(list, malfunctionPager);
+  const pageItems = paginateListOrAll(list, malfunctionPager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (m) => `
       <tr>
-        <td>${m.no || ""}</td>
+        <td class="mobile-hide">${m.no || ""}</td>
         <td class="title-cell"><a data-action="detail" data-id="${m.id}">${m.title}</a></td>
         <td><span class="badge info">${m.vehicleType}</span></td>
         <td class="actions">
@@ -122,7 +123,7 @@ function renderMalfunctionList() {
     btn.addEventListener("click", () => deleteMalfunction(btn.dataset.id));
   });
 
-  renderPagination("malfunction-pager", malfunctionPager, list.length, renderMalfunctionList);
+  renderPaginationOrAll("malfunction-pager", malfunctionPager, list.length, renderMalfunctionList, skipPaging);
 }
 
 /* ---------- 상세 화면 (메인 > 고장처치 매뉴얼 > 제목 클릭 시) ---------- */
@@ -286,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLayout("malfunction");
   renderVehicleTabs();
   renderMalfunctionList();
+  onViewportChange(renderMalfunctionList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

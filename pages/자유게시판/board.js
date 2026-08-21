@@ -48,22 +48,23 @@ function renderPostList() {
     postPager.page = 0;
     renderPostList();
   });
+  const skipPaging = !!postSearch.query.trim() || isAppViewport();
 
   if (reversed.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">등록된 게시글이 없습니다.</div></td></tr>`;
-    renderPagination("board-pager", postPager, 0, renderPostList);
+    renderPaginationOrAll("board-pager", postPager, 0, renderPostList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(reversed, postPager);
+  const pageItems = paginateListOrAll(reversed, postPager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (p) => `
       <tr>
-        <td>${p.title}</td>
+        <td class="title-cell">${p.title}</td>
         <td>${p.author}</td>
-        <td>${p.date}</td>
+        <td class="mobile-hide">${p.date}</td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${p.id}">수정</button>
           <button class="btn danger small" data-action="delete" data-id="${p.id}">삭제</button>
@@ -79,7 +80,7 @@ function renderPostList() {
     btn.addEventListener("click", () => deletePost(btn.dataset.id));
   });
 
-  renderPagination("board-pager", postPager, reversed.length, renderPostList);
+  renderPaginationOrAll("board-pager", postPager, reversed.length, renderPostList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -107,6 +108,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("board");
   renderPostList();
+  onViewportChange(renderPostList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

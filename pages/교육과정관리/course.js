@@ -61,23 +61,24 @@ function renderCourseList() {
     coursePager.page = 0;
     renderCourseList();
   });
+  const skipPaging = !!courseSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 교육과정이 없습니다.</div></td></tr>`;
-    renderPagination("course-pager", coursePager, 0, renderCourseList);
+    renderPaginationOrAll("course-pager", coursePager, 0, renderCourseList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, coursePager);
+  const pageItems = paginateListOrAll(filtered, coursePager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map((c) => {
       const status = STATUS_LABEL[c.status] || STATUS_LABEL.planned;
       return `
       <tr>
-        <td>${c.name}</td>
+        <td class="title-cell">${c.name}</td>
         <td>${c.target}</td>
-        <td>${c.hours}시간</td>
+        <td class="mobile-hide">${c.hours}시간</td>
         <td><span class="badge ${status.cls}">${status.text}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${c.id}">수정</button>
@@ -94,7 +95,7 @@ function renderCourseList() {
     btn.addEventListener("click", () => deleteCourse(btn.dataset.id));
   });
 
-  renderPagination("course-pager", coursePager, filtered.length, renderCourseList);
+  renderPaginationOrAll("course-pager", coursePager, filtered.length, renderCourseList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -123,6 +124,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("course");
   renderCourseList();
+  onViewportChange(renderCourseList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

@@ -53,23 +53,24 @@ function renderScheduleList() {
     schedulePager.page = 0;
     renderScheduleList();
   });
+  const skipPaging = !!scheduleSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 다이아가 없습니다.</div></td></tr>`;
-    renderPagination("admin-schedule-pager", schedulePager, 0, renderScheduleList);
+    renderPaginationOrAll("admin-schedule-pager", schedulePager, 0, renderScheduleList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, schedulePager);
+  const pageItems = paginateListOrAll(filtered, schedulePager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (s) => `
       <tr>
-        <td>${s.line}</td>
+        <td class="title-cell">${s.line}</td>
         <td>${s.diaNo}</td>
         <td>${s.startTime}</td>
-        <td>${s.stations}개</td>
+        <td class="mobile-hide">${s.stations}개</td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${s.id}">수정</button>
           <button class="btn danger small" data-action="delete" data-id="${s.id}">삭제</button>
@@ -85,7 +86,7 @@ function renderScheduleList() {
     btn.addEventListener("click", () => deleteSchedule(btn.dataset.id));
   });
 
-  renderPagination("admin-schedule-pager", schedulePager, filtered.length, renderScheduleList);
+  renderPaginationOrAll("admin-schedule-pager", schedulePager, filtered.length, renderScheduleList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -114,6 +115,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("admin-schedule");
   renderScheduleList();
+  onViewportChange(renderScheduleList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

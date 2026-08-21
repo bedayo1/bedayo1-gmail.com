@@ -48,20 +48,21 @@ function renderAdminNoticeList() {
     adminNoticePager.page = 0;
     renderAdminNoticeList();
   });
+  const skipPaging = !!adminNoticeSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 공지·지시사항이 없습니다.</div></td></tr>`;
-    renderPagination("admin-notice-pager", adminNoticePager, 0, renderAdminNoticeList);
+    renderPaginationOrAll("admin-notice-pager", adminNoticePager, 0, renderAdminNoticeList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, adminNoticePager);
+  const pageItems = paginateListOrAll(filtered, adminNoticePager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (n) => `
       <tr>
-        <td>${n.title}</td>
+        <td class="title-cell">${n.title}</td>
         <td><span class="badge ${n.type === "지시사항" ? "danger" : "info"}">${n.type}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${n.id}">수정</button>
@@ -78,7 +79,7 @@ function renderAdminNoticeList() {
     btn.addEventListener("click", () => deleteAdminNotice(btn.dataset.id));
   });
 
-  renderPagination("admin-notice-pager", adminNoticePager, filtered.length, renderAdminNoticeList);
+  renderPaginationOrAll("admin-notice-pager", adminNoticePager, filtered.length, renderAdminNoticeList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -106,6 +107,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("admin-notice");
   renderAdminNoticeList();
+  onViewportChange(renderAdminNoticeList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

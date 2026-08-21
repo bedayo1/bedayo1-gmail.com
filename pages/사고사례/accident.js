@@ -59,20 +59,21 @@ function renderAccidentList() {
     accidentPager.page = 0;
     renderAccidentList();
   });
+  const skipPaging = !!accidentSearch.query.trim() || isAppViewport();
 
   if (sorted.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 사고사례가 없습니다.</div></td></tr>`;
-    renderPagination("accident-pager", accidentPager, 0, renderAccidentList);
+    renderPaginationOrAll("accident-pager", accidentPager, 0, renderAccidentList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(sorted, accidentPager);
+  const pageItems = paginateListOrAll(sorted, accidentPager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (a) => `
       <tr>
-        <td>${a.no || ""}</td>
+        <td class="mobile-hide">${a.no || ""}</td>
         <td class="title-cell"><a data-action="detail" data-id="${a.id}">${a.title}</a></td>
         <td><span class="badge info">${a.line}</span></td>
         <td>${a.date}</td>
@@ -94,7 +95,7 @@ function renderAccidentList() {
     btn.addEventListener("click", () => deleteAccident(btn.dataset.id));
   });
 
-  renderPagination("accident-pager", accidentPager, sorted.length, renderAccidentList);
+  renderPaginationOrAll("accident-pager", accidentPager, sorted.length, renderAccidentList, skipPaging);
 }
 
 /* ---------- 상세 화면: 운전정보 발간물 원본을 흉내낸 레이아웃 ---------- */
@@ -251,6 +252,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("accident");
   renderAccidentList();
+  onViewportChange(renderAccidentList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

@@ -55,21 +55,22 @@ function renderEmployeeList() {
     employeePager.page = 0;
     renderEmployeeList();
   });
+  const skipPaging = !!employeeSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 직원이 없습니다.</div></td></tr>`;
-    renderPagination("admin-employee-pager", employeePager, 0, renderEmployeeList);
+    renderPaginationOrAll("admin-employee-pager", employeePager, 0, renderEmployeeList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, employeePager);
+  const pageItems = paginateListOrAll(filtered, employeePager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (e) => `
       <tr>
-        <td>${e.empId}</td>
-        <td>${e.name}</td>
+        <td class="mobile-hide">${e.empId}</td>
+        <td class="title-cell">${e.name}</td>
         <td>${e.role}</td>
         <td>${e.dept}</td>
         <td class="actions">
@@ -87,7 +88,7 @@ function renderEmployeeList() {
     btn.addEventListener("click", () => deleteEmployee(btn.dataset.id));
   });
 
-  renderPagination("admin-employee-pager", employeePager, filtered.length, renderEmployeeList);
+  renderPaginationOrAll("admin-employee-pager", employeePager, filtered.length, renderEmployeeList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -116,6 +117,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("admin-employee");
   renderEmployeeList();
+  onViewportChange(renderEmployeeList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

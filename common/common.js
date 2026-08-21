@@ -398,6 +398,37 @@ function renderPagination(containerId, pager, totalItems, onChange) {
   });
 }
 
+/* 검색어가 있을 때는 검색 결과가 몇 건 안 되는 경우가 많아 페이징이 오히려 불편하므로
+   (특히 모바일/앱 화면) 검색 중에는 페이징을 건너뛰고 전체 결과를 한 번에 보여준다. */
+function paginateListOrAll(list, pager, skip) {
+  return skip ? list : paginateList(list, pager);
+}
+
+function renderPaginationOrAll(containerId, pager, totalItems, onChange, skip) {
+  if (skip) {
+    const mount = document.getElementById(containerId);
+    if (mount) mount.innerHTML = "";
+    return;
+  }
+  renderPagination(containerId, pager, totalItems, onChange);
+}
+
+/* 앱(모바일) 화면인지 판단 — 목록 표가 카드로 바뀌는 CSS 분기점(768px)과 맞춘다.
+   이 화면에서는 페이지네이션 자체를 없애고 전체 목록을 한 번에 보여준다(카드라 세로 스크롤만 하면 되므로). */
+function isAppViewport() {
+  return window.matchMedia("(max-width: 768px)").matches;
+}
+
+// 목록형 페이지가 화면 크기 변화(브라우저 창 크기 조절, 기기 회전 등)에 맞춰
+// 페이징 여부를 다시 계산하도록 재렌더 콜백을 등록한다.
+function onViewportChange(callback) {
+  let timer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(timer);
+    timer = setTimeout(callback, 150);
+  });
+}
+
 /* ---------- 네비게이션 ---------- */
 
 function getRootBase() {
@@ -427,8 +458,11 @@ function renderHeader() {
   const base = getRootBase();
   mount.outerHTML = `
     <header class="site-header" id="site-header">
-      <div class="brand">기관사 안전교육
-        <span class="sub">Locomotive Engineer Safety Training</span>
+      <div class="header-left">
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="메뉴 열기/닫기">☰</button>
+        <div class="brand">기관사 안전교육
+          <span class="sub">Locomotive Engineer Safety Training</span>
+        </div>
       </div>
       <div class="header-right">
         <div class="header-widget" id="search-widget">
@@ -457,8 +491,28 @@ function renderHeader() {
     </header>
   `;
   document.getElementById("theme-toggle-btn").addEventListener("click", toggleTheme);
+  document.getElementById("sidebar-toggle-btn").addEventListener("click", toggleSidebar);
   updateThemeToggleIcon();
   wireHeaderWidgets(base);
+}
+
+/* ---------- 사이드바 열기/닫기 (앱/모바일 화면의 슬라이드 메뉴) ---------- */
+
+function openSidebar() {
+  document.getElementById("site-sidebar")?.classList.add("open");
+  document.getElementById("sidebar-backdrop")?.classList.add("open");
+}
+
+function closeSidebar() {
+  document.getElementById("site-sidebar")?.classList.remove("open");
+  document.getElementById("sidebar-backdrop")?.classList.remove("open");
+}
+
+function toggleSidebar() {
+  const sidebar = document.getElementById("site-sidebar");
+  if (!sidebar) return;
+  if (sidebar.classList.contains("open")) closeSidebar();
+  else openSidebar();
 }
 
 function wireHeaderWidgets(base) {
@@ -545,7 +599,14 @@ function renderSidebar(activeKey) {
     <aside class="site-sidebar" id="site-sidebar">
       <nav>${sections}</nav>
     </aside>
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
   `;
+
+  document.getElementById("sidebar-backdrop").addEventListener("click", closeSidebar);
+  // 모바일에서 메뉴 항목을 클릭해 페이지를 이동할 때 슬라이드 메뉴를 자동으로 닫는다.
+  document.querySelectorAll("#site-sidebar .sidebar-menu a").forEach((a) => {
+    a.addEventListener("click", closeSidebar);
+  });
 }
 
 function renderFooter() {

@@ -48,21 +48,22 @@ function renderQuizList() {
     quizPager.page = 0;
     renderQuizList();
   });
+  const skipPaging = !!quizSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">등록된 문제가 없습니다.</div></td></tr>`;
-    renderPagination("admin-quiz-pager", quizPager, 0, renderQuizList);
+    renderPaginationOrAll("admin-quiz-pager", quizPager, 0, renderQuizList, skipPaging);
     return;
   }
 
-  const pageItems = paginateList(filtered, quizPager);
+  const pageItems = paginateListOrAll(filtered, quizPager, skipPaging);
 
   tbody.innerHTML = pageItems
     .map(
       (q) => `
       <tr>
         <td><span class="badge neutral">${q.category}</span></td>
-        <td class="question">${q.question}</td>
+        <td class="question title-cell">${q.question}</td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${q.id}">수정</button>
           <button class="btn danger small" data-action="delete" data-id="${q.id}">삭제</button>
@@ -78,7 +79,7 @@ function renderQuizList() {
     btn.addEventListener("click", () => deleteQuiz(btn.dataset.id));
   });
 
-  renderPagination("admin-quiz-pager", quizPager, filtered.length, renderQuizList);
+  renderPaginationOrAll("admin-quiz-pager", quizPager, filtered.length, renderQuizList, skipPaging);
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -106,6 +107,7 @@ function closeModal() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("admin-quiz");
   renderQuizList();
+  onViewportChange(renderQuizList);
 
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);

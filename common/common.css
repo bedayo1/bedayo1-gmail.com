@@ -93,6 +93,13 @@ body {
   z-index: 10;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .site-header .brand {
   font-weight: 700;
   font-size: 18px;
@@ -135,6 +142,30 @@ body {
 
 .theme-toggle-btn:hover {
   background: var(--color-surface-hover);
+}
+
+/* 앱(모바일) 화면에서만 보이는 좌측 메뉴 열기/숨기기 버튼 — 데스크톱에서는 사이드바가 항상 보이므로 숨김 */
+.sidebar-toggle-btn {
+  display: none;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.sidebar-backdrop {
+  display: none;
 }
 
 /* ---------- 헤더 위젯 (통합검색 / AI챗봇) ---------- */
@@ -381,21 +412,115 @@ body {
     grid-template-columns: 1fr;
     grid-template-areas:
       "header"
-      "sidebar"
       "main"
       "footer";
   }
 
-  .site-sidebar {
-    position: static;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--color-border);
+  .sidebar-toggle-btn {
+    display: flex;
   }
 
-  .sidebar-menu {
-    flex-direction: row;
-    flex-wrap: wrap;
+  /* 모바일에서는 사이드바를 그리드 흐름에서 빼고, 화면 왼쪽에서 슬라이드로 열리는 패널로 전환한다 */
+  .site-sidebar {
+    grid-area: unset;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    bottom: 0;
+    width: 78vw;
+    max-width: 300px;
+    height: auto;
+    border-right: 1px solid var(--color-border);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 150;
+  }
+
+  .site-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 140;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .site-header .brand .sub {
+    display: none;
+  }
+
+  /* 목록 표가 좁은 화면 밖으로 넘치는 문제를 근본적으로 없애기 위해, 표를 가로 스크롤하는 대신
+     행 하나하나를 카드로 쌓는 방식으로 바꾼다. 상대적으로 덜 중요한 칸(.mobile-hide 로 표시)은
+     카드에서 아예 숨기고, 제목만 굵게 강조해서 한눈에 훑어볼 수 있게 한다. */
+  .data-table,
+  .data-table tbody,
+  .data-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--color-surface);
+  }
+
+  .data-table tr:hover {
+    background: var(--color-surface);
+  }
+
+  .data-table td {
+    display: block;
+    border: none;
+    padding: 3px 0;
+    max-width: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .data-table td.mobile-hide {
+    display: none;
+  }
+
+  .data-table td.title-cell {
+    font-size: 15px;
+    font-weight: 600;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table td.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+    overflow: visible;
+  }
+
+  .data-table .empty-state {
+    padding: 24px 0;
   }
 }
 
