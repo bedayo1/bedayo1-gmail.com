@@ -108,7 +108,7 @@ body {
 }
 
 .site-header .header-date {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
   font-size: 13px;
   color: var(--color-text-muted);
 }
@@ -572,7 +572,7 @@ body {
 
 /* 숫자 지표(KPI)는 모노스페이스로 표시 */
 .stat-value, .kpi {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
 }
 
 /* ---------- 토스트 알림 (common.js showToast 가 사용) ---------- */

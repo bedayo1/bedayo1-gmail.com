@@ -32,7 +32,7 @@
 }
 
 .mypage-stat-num {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
   font-size: 26px;
   font-weight: 700;
   color: var(--color-primary);
