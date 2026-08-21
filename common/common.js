@@ -6,16 +6,16 @@
 // group: "main"(사용자 메뉴) | "admin"(관리자 메뉴)
 const NAV_ITEMS = [
   { key: "home", label: "홈", path: "index.html", icon: "🏠", group: "main" },
-  { key: "course", label: "교육과정 관리", path: "pages/course/course.html", icon: "📚", group: "main" },
-  { key: "accident", label: "사고사례", path: "pages/accident/accident.html", icon: "📋", group: "main" },
-  { key: "malfunction", label: "고장처치 매뉴얼", path: "pages/malfunction/malfunction.html", icon: "🔧", group: "main" },
-  { key: "emergency", label: "이례상황 매뉴얼", path: "pages/emergency/emergency.html", icon: "🚨", group: "main" },
-  { key: "board", label: "자유게시판", path: "pages/board/board.html", icon: "💬", group: "main" },
-  { key: "mypage", label: "마이페이지", path: "pages/mypage/mypage.html", icon: "👤", group: "main" },
-  { key: "admin-employee", label: "직원 관리", path: "pages/admin-employee/admin-employee.html", icon: "👥", group: "admin" },
-  { key: "admin-notice", label: "공지·지시사항 관리", path: "pages/admin-notice/admin-notice.html", icon: "📢", group: "admin" },
-  { key: "admin-quiz", label: "문제(적합성검사) 관리", path: "pages/admin-quiz/admin-quiz.html", icon: "🧠", group: "admin" },
-  { key: "admin-schedule", label: "다이아·스케줄 관리", path: "pages/admin-schedule/admin-schedule.html", icon: "📅", group: "admin" },
+  { key: "course", label: "교육과정 관리", path: "pages/교육과정관리/course.html", icon: "📚", group: "main" },
+  { key: "accident", label: "사고사례", path: "pages/사고사례/accident.html", icon: "📋", group: "main" },
+  { key: "malfunction", label: "고장처치 매뉴얼", path: "pages/고장조치메뉴얼/malfunction.html", icon: "🔧", group: "main" },
+  { key: "emergency", label: "이례상황 매뉴얼", path: "pages/이례상황메뉴얼/emergency.html", icon: "🚨", group: "main" },
+  { key: "board", label: "자유게시판", path: "pages/자유게시판/board.html", icon: "💬", group: "main" },
+  { key: "mypage", label: "마이페이지", path: "pages/마이페이지/mypage.html", icon: "👤", group: "main" },
+  { key: "admin-employee", label: "직원 관리", path: "pages/관리자 - 직원관리/admin-employee.html", icon: "👥", group: "admin" },
+  { key: "admin-notice", label: "공지·지시사항 관리", path: "pages/관리자- 공지'지시사항관리/admin-notice.html", icon: "📢", group: "admin" },
+  { key: "admin-quiz", label: "문제(적합성검사) 관리", path: "pages/관리자 - 문제관리/admin-quiz.html", icon: "🧠", group: "admin" },
+  { key: "admin-schedule", label: "다이아·스케줄 관리", path: "pages/관리자 - 다이아(스케쥴) 관리/admin-schedule.html", icon: "📅", group: "admin" },
 ];
 
 const NAV_GROUPS = [
