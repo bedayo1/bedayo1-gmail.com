@@ -137,6 +137,145 @@ body {
   background: var(--color-surface-hover);
 }
 
+/* ---------- 헤더 위젯 (통합검색 / AI챗봇) ---------- */
+
+.header-widget {
+  position: relative;
+}
+
+.header-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.header-icon-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.widget-popup {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-width: 90vw;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  padding: 14px;
+  z-index: 200;
+}
+
+.header-widget.open .widget-popup {
+  display: block;
+}
+
+.widget-popup input[type="text"] {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.widget-popup-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+#chatbot-widget-form {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#chatbot-widget-form input {
+  flex: 1;
+}
+
+.header-search-results {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.header-search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.header-search-result:hover {
+  background: var(--color-surface-hover);
+}
+
+.header-search-result .badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.header-search-result-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header-search-result-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-search-result-snippet {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-search-empty {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  padding: 6px 2px;
+}
+
+.widget-more-link {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-primary);
+  text-decoration: none;
+  text-align: right;
+}
+
+.widget-more-link:hover {
+  text-decoration: underline;
+}
+
 /* ---------- 사이드바 ---------- */
 .site-sidebar {
   grid-area: sidebar;
