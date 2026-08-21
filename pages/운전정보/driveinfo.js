@@ -3,6 +3,7 @@
 // 사업소가 늘어나면 이 배열에 한 줄만 추가하면 필터 탭과 등록 폼 select가 함께 늘어난다.
 const DEPOTS = [
   { key: "신답승무사업소", label: "신답승무 사업소" },
+  { key: "기타", label: "기타" },
 ];
 
 const DEPOT_TABS = [{ key: "all", label: "전체" }, ...DEPOTS];
@@ -23,7 +24,7 @@ function getDriveinfo(id) {
 }
 
 function addDriveinfo(data) {
-  driveinfos.push({ id: uid(), ...data });
+  driveinfos.push({ id: uid(), date: formatDate(new Date()), ...data });
   saveData("driveinfos", driveinfos);
   renderDriveinfoList();
 }
@@ -42,6 +43,10 @@ function deleteDriveinfo(id) {
 }
 
 /* ---------- 렌더링 (필터 탭 & 목록) ---------- */
+
+function depotLabel(key) {
+  return DEPOTS.find((x) => x.key === key)?.label || key;
+}
 
 function renderDepotTabs() {
   const mount = document.getElementById("depot-tabs");
@@ -63,10 +68,12 @@ function renderDriveinfoList() {
   const tbody = document.getElementById("driveinfo-tbody");
   const list = (
     currentDepotFilter === "all" ? driveinfos : driveinfos.filter((d) => d.depot === currentDepotFilter)
-  ).slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+  )
+    .slice()
+    .reverse();
 
   if (list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 운전정보가 없습니다.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 게시글이 없습니다.</div></td></tr>`;
     return;
   }
 
@@ -74,9 +81,9 @@ function renderDriveinfoList() {
     .map(
       (d) => `
       <tr>
-        <td>${d.no || ""}</td>
         <td class="title-cell"><a data-action="detail" data-id="${d.id}">${d.title}</a></td>
-        <td><span class="badge info">${DEPOTS.find((x) => x.key === d.depot)?.label || d.depot}</span></td>
+        <td>${d.author}</td>
+        <td><span class="badge info">${depotLabel(d.depot)}</span></td>
         <td>${d.date}</td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${d.id}">수정</button>
@@ -97,9 +104,9 @@ function renderDriveinfoList() {
   });
 }
 
-/* ---------- 상세 화면: 운전정보 발간물 원본을 흉내낸 레이아웃 ---------- */
+/* ---------- 상세 화면 ---------- */
 
-function renderBulletinSection(label, value) {
+function renderDetailSection(label, value) {
   if (!value) return "";
   return `
     <div class="detail-section">
@@ -112,60 +119,18 @@ function openDetail(id) {
   const item = getDriveinfo(id);
   if (!item) return;
 
-  const photos = item.photos || [];
-  const gallery = photos
-    .map(
-      (p) => `
-      <div class="bulletin-photo-item">
-        <a href="${p.file}" target="_blank"><img src="${p.file}" alt="${p.caption || "관련사진"}"></a>
-        ${p.caption ? `<span class="caption">[${p.caption}]</span>` : ""}
-      </div>`
-    )
-    .join("");
-
-  const diagram = item.diagram
-    ? `<div class="bulletin-diagram"><img src="${item.diagram}" alt="상황도"></div>`
-    : "";
-
+  document.getElementById("detail-title").textContent = item.title;
   document.getElementById("detail-body").innerHTML = `
-    <div class="bulletin-header">
-      <span class="bulletin-tag">운전정보</span>
-      <h2>${item.title}</h2>
-      <span class="bulletin-no">${item.no || ""}</span>
+    <div class="detail-section">
+      <h4>작성자 · 사업소 · 작성일</h4>
+      <p>${item.author} · ${depotLabel(item.depot)} · ${item.date}</p>
     </div>
-    <div class="bulletin-body">
-      <div class="bulletin-main">
-        ${renderBulletinSection("발생개요", item.overview)}
-        ${diagram}
-        ${renderBulletinSection("원 인", item.cause)}
-        ${renderBulletinSection("재발방지 대책", item.countermeasures)}
-        ${renderBulletinSection("참고", item.extra)}
-      </div>
-      <div class="bulletin-side">
-        <div class="side-block">
-          <h4>1. 일 시</h4>
-          <div>${item.date}</div>
-        </div>
-        <div class="side-block">
-          <h4>2. 장 소</h4>
-          <div>${item.location || ""}</div>
-        </div>
-        <div class="side-block">
-          <h4>사업소</h4>
-          <div>${DEPOTS.find((x) => x.key === item.depot)?.label || item.depot}</div>
-        </div>
-        ${
-          gallery
-            ? `<div class="side-block"><h4>3. 관련 사진</h4><div class="bulletin-photo-gallery">${gallery}</div></div>`
-            : ""
-        }
-        ${
-          item.videos && item.videos.length
-            ? `<div class="side-block"><h4>4. 관련 동영상</h4>${renderVideoGallery(item.videos)}</div>`
-            : ""
-        }
-      </div>
-    </div>
+    ${renderDetailSection("내용", item.content)}
+    ${
+      item.attachments && item.attachments.length
+        ? `<div class="detail-section"><h4>첨부파일</h4>${renderAttachmentList(item.attachments)}</div>`
+        : ""
+    }
   `;
   document.getElementById("detail-backdrop").classList.add("open");
 }
@@ -175,73 +140,22 @@ function closeDetail() {
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
-/* 관련사진 입력: 사진을 끌어다 놓으면 그 자리에 삽입되고, 바로 밑에 설명을 적을 수 있다. */
-
-function insertPhotoBlock(dataUrl, captionText) {
-  const editor = document.getElementById("photo-editor");
-
-  const img = document.createElement("img");
-  img.src = dataUrl;
-  editor.appendChild(img);
-
-  const caption = document.createElement("div");
-  caption.className = "photo-editor-caption";
-  caption.contentEditable = "true";
-  caption.textContent = captionText || "";
-  editor.appendChild(caption);
-
-  caption.focus();
-}
-
-function handlePhotoFiles(fileList) {
-  Array.from(fileList || []).forEach((file) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => insertPhotoBlock(reader.result, "");
-    reader.readAsDataURL(file);
-  });
-}
-
-function populatePhotoEditor(photos) {
-  const editor = document.getElementById("photo-editor");
-  editor.innerHTML = "";
-  (photos || []).forEach((p) => insertPhotoBlock(p.file, p.caption || ""));
-  editor.blur();
-}
-
-function collectPhotosFromEditor() {
-  const editor = document.getElementById("photo-editor");
-  const photos = [];
-  editor.querySelectorAll("img").forEach((img) => {
-    let captionText = "";
-    const next = img.nextElementSibling;
-    if (next && next.classList.contains("photo-editor-caption")) {
-      captionText = next.textContent.trim();
-    }
-    photos.push({ file: img.getAttribute("src"), caption: captionText });
-  });
-  return photos;
-}
 
 function openModal(id) {
   const backdrop = document.getElementById("modal-backdrop");
   const title = document.getElementById("modal-title");
   const item = id ? getDriveinfo(id) : null;
 
+  const depotSelect = document.getElementById("f-depot");
+  depotSelect.innerHTML = DEPOTS.map((d) => `<option value="${d.key}">${d.label}</option>`).join("");
+
   document.getElementById("f-id").value = id || "";
-  document.getElementById("f-no").value = item ? item.no || "" : "";
   document.getElementById("f-title").value = item ? item.title : "";
-  document.getElementById("f-depot").value = item ? item.depot : DEPOTS[0].key;
-  document.getElementById("f-date").value = item ? item.date : "";
-  document.getElementById("f-location").value = item ? item.location || "" : "";
-  document.getElementById("f-overview").value = item ? item.overview || "" : "";
-  document.getElementById("f-cause").value = item ? item.cause || "" : "";
-  document.getElementById("f-countermeasures").value = item ? item.countermeasures || "" : "";
-  document.getElementById("f-extra").value = item ? item.extra || "" : "";
-  document.getElementById("f-photo-picker").value = "";
-  populatePhotoEditor(item ? item.photos : []);
-  document.getElementById("f-videos").value = item ? videosToText(item.videos) : "";
-  title.textContent = item ? "운전정보 수정" : "운전정보 추가";
+  document.getElementById("f-author").value = item ? item.author : "";
+  depotSelect.value = item ? item.depot : DEPOTS[0].key;
+  document.getElementById("f-content").value = item ? item.content : "";
+  document.getElementById("f-attachments").value = item ? videosToText(item.attachments) : "";
+  title.textContent = item ? "글 수정" : "글쓰기";
 
   backdrop.classList.add("open");
 }
@@ -268,62 +182,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });
 
-  const photoEditor = document.getElementById("photo-editor");
-
-  document.getElementById("btn-add-photo").addEventListener("click", () => {
-    document.getElementById("f-photo-picker").click();
-  });
-
-  document.getElementById("f-photo-picker").addEventListener("change", (e) => {
-    handlePhotoFiles(e.target.files);
-    e.target.value = "";
-  });
-
-  photoEditor.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    photoEditor.classList.add("dragover");
-  });
-  photoEditor.addEventListener("dragleave", () => {
-    photoEditor.classList.remove("dragover");
-  });
-  photoEditor.addEventListener("drop", (e) => {
-    e.preventDefault();
-    photoEditor.classList.remove("dragover");
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-      handlePhotoFiles(e.dataTransfer.files);
-    }
-  });
-  photoEditor.addEventListener("paste", (e) => {
-    const items = Array.from(e.clipboardData?.items || []);
-    const imageItems = items.filter((it) => it.type.startsWith("image/"));
-    if (imageItems.length === 0) return;
-    e.preventDefault();
-    handlePhotoFiles(imageItems.map((it) => it.getAsFile()));
-  });
-
   document.getElementById("driveinfo-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const id = document.getElementById("f-id").value;
     const data = {
-      no: document.getElementById("f-no").value.trim(),
       title: document.getElementById("f-title").value.trim(),
+      author: document.getElementById("f-author").value.trim(),
       depot: document.getElementById("f-depot").value,
-      date: document.getElementById("f-date").value,
-      location: document.getElementById("f-location").value.trim(),
-      overview: document.getElementById("f-overview").value.trim(),
-      cause: document.getElementById("f-cause").value.trim(),
-      countermeasures: document.getElementById("f-countermeasures").value.trim(),
-      extra: document.getElementById("f-extra").value.trim(),
-      photos: collectPhotosFromEditor(),
-      videos: parseVideosText(document.getElementById("f-videos").value),
+      content: document.getElementById("f-content").value.trim(),
+      attachments: parseVideosText(document.getElementById("f-attachments").value),
     };
 
     if (id) {
       updateDriveinfo(id, data);
-      showToast("운전정보가 수정되었습니다.");
+      showToast("게시글이 수정되었습니다.");
     } else {
       addDriveinfo(data);
-      showToast("운전정보가 추가되었습니다.");
+      showToast("게시글이 등록되었습니다.");
     }
     closeModal();
   });

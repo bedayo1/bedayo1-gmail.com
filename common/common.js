@@ -121,7 +121,7 @@ const SEARCH_SOURCES = [
     icon: "📰",
     path: "pages/운전정보/driveinfo.html",
     getTitle: (x) => x.title,
-    getText: (x) => [x.title, x.depot, x.location, x.overview, x.cause, x.countermeasures].join(" "),
+    getText: (x) => [x.title, x.author, x.depot, x.content].join(" "),
   },
   {
     key: "malfunctions",
@@ -261,6 +261,22 @@ function renderVideoGallery(videos) {
     )
     .join("");
   return `<div class="detail-video-gallery">${items}</div>`;
+}
+
+// 동영상뿐 아니라 어떤 파일이든(문서, 압축파일 등) 다운로드 링크 목록으로 보여줄 때 사용.
+function renderAttachmentList(attachments) {
+  if (!attachments || attachments.length === 0) return "";
+  const items = attachments
+    .map((a) => {
+      const name = a.file.split("/").pop();
+      return `
+      <a class="attachment-item" href="${a.file}" download target="_blank">
+        <span>📎 ${name}</span>
+        ${a.caption ? `<span class="attachment-caption">${a.caption}</span>` : ""}
+      </a>`;
+    })
+    .join("");
+  return `<div class="attachment-list">${items}</div>`;
 }
 
 /* ---------- 네비게이션 ---------- */

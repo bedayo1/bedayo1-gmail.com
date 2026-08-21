@@ -14,23 +14,23 @@
 
 <main class="app-main">
   <h1 class="page-title">운전정보</h1>
-  <p class="page-desc">사업소별 운전정보 발간물을 등록하고 공유합니다.</p>
+  <p class="page-desc">사업소별 운전정보를 자유게시판처럼 등록하고 공유합니다. 파일 첨부도 가능합니다.</p>
 
   <section class="card">
     <div class="depot-tabs" id="depot-tabs"></div>
 
     <div class="toolbar">
       <div></div>
-      <button class="btn" id="btn-new">+ 운전정보 추가</button>
+      <button class="btn" id="btn-new">+ 글쓰기</button>
     </div>
 
     <table class="data-table">
       <thead>
         <tr>
-          <th class="col-no">호</th>
           <th>제목 <span style="font-weight:400; text-transform:none; letter-spacing:0;">(클릭 시 상세보기)</span></th>
+          <th>작성자</th>
           <th>사업소</th>
-          <th>발생일</th>
+          <th>작성일</th>
           <th></th>
         </tr>
       </thead>
@@ -43,59 +43,29 @@
 
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal" id="edit-modal-box">
-    <h2 class="page-title" style="font-size:18px;" id="modal-title">운전정보 추가</h2>
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="modal-title">글쓰기</h2>
     <form id="driveinfo-form">
       <input type="hidden" id="f-id">
-      <div class="form-row">
-        <label for="f-no">호(예: 2026-1)</label>
-        <input type="text" id="f-no" placeholder="예: 2026-1">
-      </div>
       <div class="form-row">
         <label for="f-title">제목</label>
         <input type="text" id="f-title" required>
       </div>
       <div class="form-row">
+        <label for="f-author">작성자</label>
+        <input type="text" id="f-author" required>
+      </div>
+      <div class="form-row">
         <label for="f-depot">사업소</label>
-        <select id="f-depot">
-          <option value="신답승무사업소">신답승무 사업소</option>
-        </select>
+        <select id="f-depot"></select>
       </div>
       <div class="form-row">
-        <label for="f-date">발생일</label>
-        <input type="date" id="f-date" required>
+        <label for="f-content">내용</label>
+        <textarea id="f-content" rows="6" required></textarea>
       </div>
       <div class="form-row">
-        <label for="f-location">장소</label>
-        <input type="text" id="f-location" placeholder="예: 4호선 길음역 하선">
-      </div>
-      <div class="form-row">
-        <label for="f-overview">발생개요</label>
-        <textarea id="f-overview" rows="3" required></textarea>
-      </div>
-      <div class="form-row">
-        <label for="f-cause">원인</label>
-        <textarea id="f-cause" rows="3"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="f-countermeasures">재발방지 대책</label>
-        <textarea id="f-countermeasures" rows="4"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="f-extra">참고 (관련 표·현황 등, 선택)</label>
-        <textarea id="f-extra" rows="2"></textarea>
-      </div>
-      <div class="form-row">
-        <label for="photo-editor">관련사진 — 사진을 이 안으로 끌어다 놓고, 사진 밑에 바로 설명을 적으세요</label>
-        <div class="photo-editor-toolbar">
-          <button type="button" class="btn secondary small" id="btn-add-photo">+ 사진 추가</button>
-          <input type="file" id="f-photo-picker" accept="image/*" multiple style="display:none">
-        </div>
-        <div id="photo-editor" class="photo-editor" contenteditable="true"></div>
-      </div>
-      <div class="form-row">
-        <label for="f-videos">관련 동영상 — 영상 파일을 이 페이지 폴더(예: videos/)에 직접 넣은 뒤, 한 줄에 하나씩 "경로 | 설명" 형식으로 입력하세요</label>
-        <textarea id="f-videos" rows="3" placeholder="videos/example.mp4 | 상황 재현 영상"></textarea>
+        <label for="f-attachments">첨부파일 — 파일을 이 페이지 폴더(예: files/)에 직접 넣은 뒤, 한 줄에 하나씩 "경로 | 설명" 형식으로 입력하세요</label>
+        <textarea id="f-attachments" rows="3" placeholder="files/example.pdf | 관련 자료"></textarea>
       </div>
       <div class="modal-actions">
         <button type="button" class="btn secondary" id="btn-cancel">취소</button>
@@ -107,7 +77,8 @@
 
 <!-- 상세 화면 (목록에서 제목 클릭 시) -->
 <div class="modal-backdrop" id="detail-backdrop">
-  <div class="modal" id="detail-modal-box">
+  <div class="modal">
+    <h2 class="page-title" style="font-size:18px;" id="detail-title">-</h2>
     <div id="detail-body"></div>
     <div class="modal-actions">
       <button type="button" class="btn secondary" id="btn-detail-close">닫기</button>
