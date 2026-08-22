@@ -5,7 +5,6 @@ let profile = loadData("profile", {
   empId: "22100119",
   role: "기관사",
   dept: "신답승무사업소",
-  pw: "1234",
 });
 saveData("profile", profile);
 
@@ -36,10 +35,10 @@ function renderStats() {
 }
 
 function changePassword(oldPw, newPw1, newPw2) {
-  if (oldPw !== profile.pw) return { ok: false, message: "현재 비밀번호가 올바르지 않습니다." };
+  if (oldPw !== getEmployeePassword(profile.empId)) return { ok: false, message: "현재 비밀번호가 올바르지 않습니다." };
   if (newPw1.length < 4) return { ok: false, message: "새 비밀번호는 4자리 이상이어야 합니다." };
   if (newPw1 !== newPw2) return { ok: false, message: "새 비밀번호가 일치하지 않습니다." };
-  updateProfile({ pw: newPw1 });
+  setEmployeePassword(profile.empId, newPw1);
   return { ok: true, message: "비밀번호가 변경되었습니다." };
 }
 

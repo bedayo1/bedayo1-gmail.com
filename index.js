@@ -1,73 +1,14 @@
 /* index.html 전용 데이터 & 로직 */
 
-// 전역 변수 + localStorage 영속화 (규칙 2)
-let notices = loadData("notices", [
-  { id: uid(), text: "2026년 하반기 기관사 정기 안전교육 일정 안내", date: formatDate(new Date()) },
-  { id: uid(), text: "철도안전법 개정사항 반영 교육자료 업데이트", date: formatDate(new Date()) },
-]);
-saveData("notices", notices); // 최초 로드시 시드 데이터를 즉시 영속화
-
-// mypage.js 의 profile 을 "로그인한 사용자" 취급 — 이 앱엔 별도 로그인이 없으므로 마이페이지 프로필을 그대로 사용한다.
+// 로그인 시 login.js 가 실제 로그인한 직원 정보로 profile 을 채워 넣는다.
 let profile = loadData("profile", {
   name: "김기관",
   empId: "22100119",
   role: "기관사",
   dept: "신답승무사업소",
-  pw: "1234",
 });
 
 let attendances = loadData("attendances", []);
-
-/* ---------- CRUD (공지) ---------- */
-
-function getAllNotices() {
-  return notices;
-}
-
-function addNotice(text) {
-  notices.push({ id: uid(), text, date: formatDate(new Date()) });
-  saveData("notices", notices);
-  renderNoticeList();
-}
-
-function deleteNotice(id) {
-  notices = notices.filter((n) => n.id !== id);
-  saveData("notices", notices);
-  renderNoticeList();
-}
-
-/* ---------- 렌더링 (공지 / 통계) ---------- */
-
-function renderNoticeList() {
-  const listEl = document.getElementById("notice-list");
-  const countEl = document.getElementById("stat-notice-count");
-  countEl.textContent = notices.length;
-
-  if (notices.length === 0) {
-    listEl.innerHTML = `<li class="empty-state" style="border:none;">등록된 공지가 없습니다.</li>`;
-    return;
-  }
-
-  listEl.innerHTML = notices
-    .map(
-      (n) => `
-      <li>
-        <span><span class="notice-date">${n.date}</span>${n.text}</span>
-        <button class="notice-del" data-id="${n.id}">삭제</button>
-      </li>`
-    )
-    .join("");
-
-  listEl.querySelectorAll(".notice-del").forEach((btn) => {
-    btn.addEventListener("click", () => deleteNotice(btn.dataset.id));
-  });
-}
-
-function renderCourseCount() {
-  // course.js 가 localStorage 에 저장한 데이터를 홈 화면에서 읽어와 요약 표시
-  const courses = loadData("courses", []);
-  document.getElementById("stat-course-count").textContent = courses.length;
-}
 
 /* =========================================================
    출근 절차 마법사
@@ -322,24 +263,117 @@ function renderStep2Html() {
   `;
 }
 
+// 다이아 표 HTML(페이지 전체)에서 첫 번째 근무(운행번호) 블록만 잘라낸다.
+// 표의 맨 왼쪽 번호 칸이 rowspan>1 인 첫 <td>를 그 근무의 시작으로 보고, rowspan 만큼의 행을 잘라낸다.
+function extractFirstDutyBlock(tableHtml) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = tableHtml;
+  const table = wrapper.querySelector("table");
+  if (!table) return tableHtml;
+
+  const rows = Array.from(table.querySelectorAll("tr"));
+  let groupStart = -1;
+  let groupSpan = 1;
+  for (let i = 0; i < rows.length; i++) {
+    const firstCell = rows[i].querySelector("td");
+    const rowspan = firstCell ? parseInt(firstCell.getAttribute("rowspan") || "1", 10) : 1;
+    if (rowspan > 1) {
+      groupStart = i;
+      groupSpan = rowspan;
+      break;
+    }
+  }
+  if (groupStart === -1) return tableHtml;
+
+  const headerRows = rows.slice(0, groupStart);
+  const groupRows = rows.slice(groupStart, groupStart + groupSpan);
+
+  const newTable = document.createElement("table");
+  newTable.className = table.className;
+  const colgroup = table.querySelector("colgroup");
+  if (colgroup) newTable.appendChild(colgroup.cloneNode(true));
+  headerRows.concat(groupRows).forEach((r) => newTable.appendChild(r.cloneNode(true)));
+
+  return newTable.outerHTML;
+}
+
+// 사고사례 상세(accident.js openDetail)와 완전히 동일한 원문 게시물 레이아웃으로 긴급공지를 보여준다
+// (accident.css 의 bulletin-* 클래스를 그대로 재사용 — index.html 에서 accident.css 를 함께 불러온다).
+function renderUrgentBulletinHtml(item, photoBase) {
+  const photos = item.photos || [];
+  const gallery = photos
+    .map(
+      (p) => `
+      <div class="bulletin-photo-item">
+        <a href="${photoBase}${p.file}" target="_blank"><img src="${photoBase}${p.file}" alt="${p.caption || "관련사진"}"></a>
+        ${p.caption ? `<span class="caption">[${p.caption}]</span>` : ""}
+      </div>`
+    )
+    .join("");
+
+  const diagram = item.diagram
+    ? `<div class="bulletin-diagram"><img src="${photoBase}${item.diagram}" alt="상황도"></div>`
+    : "";
+
+  return `
+    <div class="bulletin-header">
+      <span class="bulletin-tag">운전정보</span>
+      <h2>${item.title}</h2>
+      <span class="bulletin-no">${item.no || ""}</span>
+    </div>
+    <div class="bulletin-body">
+      <div class="bulletin-main">
+        ${renderBulletinSection("장애(발생)개요", item.overview)}
+        ${diagram}
+        ${renderBulletinSection("원 인", item.cause)}
+        ${renderBulletinSection("재발방지 대책", item.countermeasures)}
+        ${renderBulletinSection("참고", item.extra)}
+      </div>
+      <div class="bulletin-side">
+        <div class="side-block">
+          <h4>1. 일 시</h4>
+          <div>${item.date}</div>
+        </div>
+        <div class="side-block">
+          <h4>2. 장 소</h4>
+          <div>${item.location || item.line}</div>
+        </div>
+        ${gallery ? `<div class="side-block"><h4>3. 관련 사진</h4><div class="bulletin-photo-gallery">${gallery}</div></div>` : ""}
+      </div>
+    </div>`;
+}
+
+function renderBulletinSection(label, value) {
+  if (!value) return "";
+  return `
+    <div class="detail-section">
+      <h4>${label}</h4>
+      <p>${value}</p>
+    </div>`;
+}
+
 function renderStep3Html() {
   const urgent = getTodayUrgentNotices();
   const ackedCount = urgent.filter((n) => wizardData.ackedNoticeIds.has(n.id)).length;
+  const base = getRootBase();
+  const photoBase = `${base}pages/사고사례/`;
 
+  // 긴급공지는 운전지시사항/근무행로와 섞이지 않도록, 사고사례에 올린 원문 게시물 그대로 독립된 화면으로 분리해서 보여준다.
   const urgentHtml = urgent.length
     ? urgent
-        .map(
-          (n) => `
-      <div class="notice-alert-card">
-        <span class="badge danger">긴급 공지 · 사고사례</span>
-        <div class="notice-alert-title">${n.title}</div>
-        <div class="notice-alert-meta">${n.date}${n.line ? ` · ${n.line}` : ""}</div>
-        <div class="notice-alert-footer">
+        .map((n) => {
+          return `
+      <div class="notice-alert-screen">
+        <div class="notice-alert-screen-header">
+          <span class="badge danger">🚨 긴급 공지</span>
           <span>${ackedCount}/${urgent.length} 확인</span>
-          <button type="button" class="btn small ack-btn" data-id="${n.id}" ${wizardData.ackedNoticeIds.has(n.id) ? "disabled" : ""}>${wizardData.ackedNoticeIds.has(n.id) ? "확인됨" : "확인 완료"}</button>
         </div>
-      </div>`
-        )
+        ${renderUrgentBulletinHtml(n, photoBase)}
+        <div class="notice-alert-screen-footer">
+          <button type="button" class="btn ack-btn" data-id="${n.id}" ${wizardData.ackedNoticeIds.has(n.id) ? "disabled" : ""}>${wizardData.ackedNoticeIds.has(n.id) ? "✅ 확인됨" : "확인 완료"}</button>
+        </div>
+      </div>`;
+        })
         .join("")
     : `<div class="empty-state">등록된 긴급 공지가 없습니다.</div>`;
 
@@ -358,8 +392,10 @@ function renderStep3Html() {
 
   const dutyType = [0, 6].includes(new Date().getDay()) ? "휴일" : "평일";
   const diaPages = (window.DIA_DATA && window.DIA_DATA[profile.dept] && window.DIA_DATA[profile.dept][dutyType]) || [];
+  // 아직 "내 근무" 지정 기능이 없어서, 우선 첫 번째 근무(운행번호) 한 덩어리만 잘라서 보여준다.
+  // 나중에 직원별 담당 근무번호를 지정하는 기능이 생기면, 여기서 diaPages 전체 중 해당 근무 블록을 찾아 보여주면 된다.
   const diaHtml = diaPages[0]
-    ? `<div class="dia-scroll wizard-dia-embed">${diaPages[0]}</div>`
+    ? `<div class="dia-scroll wizard-dia-embed">${extractFirstDutyBlock(diaPages[0])}</div>`
     : `<div class="empty-state">등록된 근무행로가 없습니다.</div>`;
 
   const teammates = loadData("employees", [])
@@ -368,10 +404,7 @@ function renderStep3Html() {
     .map((e) => e.name);
 
   return `
-    <div class="wizard-section">
-      <h4>긴급 공지</h4>
-      ${urgentHtml}
-    </div>
+    ${urgentHtml}
     <div class="wizard-section">
       <h4>운전지시사항</h4>
       ${directiveHtml}
@@ -542,7 +575,13 @@ function finishAttendance() {
       mentalStatus: wizardData.mentalStatus,
     },
     notices: {
-      urgent: getTodayUrgentNotices().map((n) => ({ id: n.id, title: n.title, date: n.date, line: n.line || "" })),
+      urgent: getTodayUrgentNotices().map((n) => ({
+        id: n.id,
+        title: n.title,
+        date: n.date,
+        line: n.line || "",
+        photo: n.photos && n.photos[0] ? n.photos[0].file : "",
+      })),
       ackedNoticeIds: [...wizardData.ackedNoticeIds],
       directives: loadData("adminNotices", [])
         .filter((n) => n.type === "지시사항")
@@ -586,10 +625,16 @@ function renderAttendanceDetailHtml(record) {
     ? n.urgent
         .map(
           (item) => `
-      <div class="notice-alert-card">
-        <span class="badge danger">긴급 공지 · 사고사례</span>
-        <div class="notice-alert-title">${item.title}</div>
-        <div class="notice-alert-meta">${item.date}${item.line ? ` · ${item.line}` : ""} · ${n.ackedNoticeIds.includes(item.id) ? "확인 완료" : "미확인"}</div>
+      <div class="notice-alert-screen">
+        <div class="notice-alert-screen-header">
+          <span class="badge danger">🚨 긴급 공지 · 사고사례</span>
+          <span>${n.ackedNoticeIds.includes(item.id) ? "확인 완료" : "미확인"}</span>
+        </div>
+        ${item.photo ? `<img class="notice-alert-photo" src="${getRootBase()}pages/사고사례/${item.photo}" alt="${item.title}">` : ""}
+        <div class="notice-alert-screen-body">
+          <div class="notice-alert-title">${item.title}</div>
+          <div class="notice-alert-meta">${item.date}${item.line ? ` · ${item.line}` : ""}</div>
+        </div>
       </div>`
         )
         .join("")
@@ -662,14 +707,7 @@ function closeAttendanceDetail() {
 
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("home");
-  renderNoticeList();
-  renderCourseCount();
   renderAttendanceCard();
-
-  document.getElementById("btn-add-notice").addEventListener("click", () => {
-    const text = prompt("공지 내용을 입력하세요");
-    if (text && text.trim()) addNotice(text.trim());
-  });
 
   document.getElementById("btn-wizard-close").addEventListener("click", confirmCloseWizard);
   document.getElementById("attendance-backdrop").addEventListener("click", (e) => {

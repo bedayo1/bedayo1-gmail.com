@@ -28,6 +28,43 @@ const NAV_GROUPS = [
 
 const STORAGE_PREFIX = "kcs_"; // 기관사(KiCSa) 안전교육 앱 localStorage 네임스페이스
 
+// 데모용 고정 관리자 계정 — 직원 로그인과 완전히 분리된 별도 계정이다 (직원 명단에는 존재하지 않음).
+const ADMIN_ACCOUNT = { id: "admin", pw: "admin1234" };
+
+/* ---------- 로그인 게이트 ---------- */
+/* 로그인 화면(login.html)을 제외한 모든 페이지는 세션이 없으면 즉시 로그인 화면으로 보낸다.
+   세션 종류(session.type)가 "employee"면 사이드바에 메인 메뉴만, "admin"이면 관리자 메뉴만 보이게 된다
+   (renderSidebar 참고). common.js 최상단에서 동기적으로 실행되어 화면이 그려지기 전에 리다이렉트한다. */
+(function enforceLoginGate() {
+  if (/(^|\/)login\.html$/.test(location.pathname)) return;
+  let session = null;
+  try {
+    session = JSON.parse(localStorage.getItem(STORAGE_PREFIX + "session"));
+  } catch (e) {
+    session = null;
+  }
+  if (!session) {
+    location.replace(getRootBase() + "login.html");
+  }
+})();
+
+function logout() {
+  localStorage.removeItem(STORAGE_PREFIX + "session");
+  location.href = getRootBase() + "login.html";
+}
+
+// 직원 비밀번호는 사번별로 localStorage("employeePasswords")에 보관한다. 값이 없으면 초기 비밀번호 1234.
+function getEmployeePassword(empId) {
+  const pwMap = loadData("employeePasswords", {});
+  return pwMap[empId] || "1234";
+}
+
+function setEmployeePassword(empId, newPw) {
+  const pwMap = loadData("employeePasswords", {});
+  pwMap[empId] = newPw;
+  saveData("employeePasswords", pwMap);
+}
+
 /* ---------- 데이터 저장 유틸 (페이지별 전역 변수의 영속화에 사용) ---------- */
 
 
@@ -456,6 +493,12 @@ function renderHeader() {
   const mount = document.getElementById("site-header");
   if (!mount) return;
   const base = getRootBase();
+  const session = loadData("session", null);
+  const userLabel = session
+    ? session.type === "admin"
+      ? "⚙️ 관리자"
+      : `${session.name || ""} ${session.role || ""}`.trim()
+    : "";
   mount.outerHTML = `
     <header class="site-header" id="site-header">
       <div class="header-left">
@@ -465,6 +508,8 @@ function renderHeader() {
         </div>
       </div>
       <div class="header-right">
+        ${userLabel ? `<div class="header-user-label">${userLabel}</div>` : ""}
+        <button class="header-icon-btn" id="logout-btn" type="button" title="로그아웃">🚪</button>
         <div class="header-widget" id="search-widget">
           <button class="header-icon-btn" id="search-widget-btn" type="button" title="통합검색">🔍</button>
           <div class="widget-popup" id="search-widget-popup">
@@ -492,6 +537,9 @@ function renderHeader() {
   `;
   document.getElementById("theme-toggle-btn").addEventListener("click", toggleTheme);
   document.getElementById("sidebar-toggle-btn").addEventListener("click", toggleSidebar);
+  document.getElementById("logout-btn").addEventListener("click", () => {
+    if (confirm("로그아웃하시겠습니까?")) logout();
+  });
   updateThemeToggleIcon();
   wireHeaderWidgets(base);
 }
@@ -582,8 +630,11 @@ function renderSidebar(activeKey) {
   const mount = document.getElementById("site-sidebar");
   if (!mount) return;
   const base = getRootBase();
+  const session = loadData("session", null);
+  // 직원 계정은 메인 메뉴만, 관리자 계정은 관리자 메뉴만 본다 (완전히 분리된 두 모드).
+  const allowedGroup = session && session.type === "admin" ? "admin" : "main";
 
-  const sections = NAV_GROUPS.map((group) => {
+  const sections = NAV_GROUPS.filter((group) => group.key === allowedGroup).map((group) => {
     const items = NAV_ITEMS.filter((item) => item.group === group.key);
     if (!items.length) return "";
     const links = items
@@ -597,15 +648,26 @@ function renderSidebar(activeKey) {
 
   mount.outerHTML = `
     <aside class="site-sidebar" id="site-sidebar">
-      <nav>${sections}</nav>
+      <nav>
+        ${sections}
+        <div class="sidebar-menu-footer">
+          <ul class="sidebar-menu">
+            <a href="#" id="sidebar-logout-link" class="sidebar-danger"><span class="icon">🚪</span>로그아웃</a>
+          </ul>
+        </div>
+      </nav>
     </aside>
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
   `;
 
   document.getElementById("sidebar-backdrop").addEventListener("click", closeSidebar);
   // 모바일에서 메뉴 항목을 클릭해 페이지를 이동할 때 슬라이드 메뉴를 자동으로 닫는다.
-  document.querySelectorAll("#site-sidebar .sidebar-menu a").forEach((a) => {
+  document.querySelectorAll("#site-sidebar .sidebar-menu a:not(#sidebar-logout-link)").forEach((a) => {
     a.addEventListener("click", closeSidebar);
+  });
+  document.getElementById("sidebar-logout-link").addEventListener("click", (e) => {
+    e.preventDefault();
+    if (confirm("로그아웃하시겠습니까?")) logout();
   });
 }
 
