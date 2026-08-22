@@ -575,13 +575,7 @@ function finishAttendance() {
       mentalStatus: wizardData.mentalStatus,
     },
     notices: {
-      urgent: getTodayUrgentNotices().map((n) => ({
-        id: n.id,
-        title: n.title,
-        date: n.date,
-        line: n.line || "",
-        photo: n.photos && n.photos[0] ? n.photos[0].file : "",
-      })),
+      urgent: getTodayUrgentNotices(), // 상세보기에서 원문 그대로 다시 보여주기 위해 사고사례 전체 항목을 그대로 저장한다.
       ackedNoticeIds: [...wizardData.ackedNoticeIds],
       directives: loadData("adminNotices", [])
         .filter((n) => n.type === "지시사항")
@@ -627,14 +621,10 @@ function renderAttendanceDetailHtml(record) {
           (item) => `
       <div class="notice-alert-screen">
         <div class="notice-alert-screen-header">
-          <span class="badge danger">🚨 긴급 공지 · 사고사례</span>
+          <span class="badge danger">🚨 긴급 공지</span>
           <span>${n.ackedNoticeIds.includes(item.id) ? "확인 완료" : "미확인"}</span>
         </div>
-        ${item.photo ? `<img class="notice-alert-photo" src="${getRootBase()}pages/사고사례/${item.photo}" alt="${item.title}">` : ""}
-        <div class="notice-alert-screen-body">
-          <div class="notice-alert-title">${item.title}</div>
-          <div class="notice-alert-meta">${item.date}${item.line ? ` · ${item.line}` : ""}</div>
-        </div>
+        ${renderUrgentBulletinHtml(item, `${getRootBase()}pages/사고사례/`)}
       </div>`
         )
         .join("")

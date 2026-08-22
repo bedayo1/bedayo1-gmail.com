@@ -42,7 +42,7 @@
 
 /* ---------- 출근 마법사 모달 ---------- */
 .wizard-modal {
-  max-width: 640px;
+  max-width: 960px;
   max-height: 88vh;
   display: flex;
   flex-direction: column;
@@ -184,7 +184,8 @@
   color: var(--color-danger);
 }
 
-/* 긴급공지: 운전지시사항/근무행로와 섞이지 않는 독립된 화면 형태로 보여준다 (사고사례 원문 사진 포함) */
+/* 긴급공지: 운전지시사항/근무행로와 섞이지 않는 독립된 화면 형태로 보여준다.
+   본문(bulletin-header/bulletin-body)은 사고사례 상세보기와 완전히 동일한 accident.css 클래스를 그대로 재사용한다. */
 .notice-alert-screen {
   border: 1px solid var(--color-danger);
   border-radius: var(--radius-lg);
@@ -204,36 +205,8 @@
   color: var(--color-text-muted);
 }
 
-.notice-alert-photo {
-  display: block;
-  width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  background: #000;
-}
-
-.notice-alert-screen-body {
-  padding: 14px;
-}
-
-.notice-alert-title {
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--color-text);
-  margin-bottom: 4px;
-}
-
-.notice-alert-meta {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: 10px;
-}
-
-.notice-alert-text {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--color-text);
-  margin: 0 0 14px;
+.notice-alert-screen-footer {
+  padding: 0 20px 18px;
 }
 
 .notice-card-item {
