@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 로그인</title>
+<link rel="stylesheet" href="./common/common.css">
+<link rel="stylesheet" href="./login.css">
+</head>
+<body class="login-page">
+
+<div class="login-wrap">
+  <div class="login-logo">
+    <div class="login-emblem">🚆</div>
+    <h1>기관사 안전교육 시스템</h1>
+    <p>Locomotive Engineer Safety Training</p>
+  </div>
+
+  <!-- 직원 로그인 -->
+  <div class="login-box" id="employee-login-box">
+    <h2>🔐 직원 로그인</h2>
+    <div class="form-row">
+      <label for="li-id">사번</label>
+      <input type="text" id="li-id" placeholder="사번을 입력하세요" autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label for="li-pw">비밀번호</label>
+      <input type="password" id="li-pw" placeholder="비밀번호를 입력하세요" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="li-err"></div>
+    <button type="button" class="btn login-btn" id="btn-employee-login">로그인</button>
+    <div class="login-notice">
+      ※ 본 시스템은 사내 기관사·차장 전용입니다.<br>
+      아이디는 <strong>사번</strong>, 초기 비밀번호는 <strong>1234</strong>입니다.
+    </div>
+    <div class="login-switch"><a id="link-to-admin">⚙️ 관리자 로그인</a></div>
+  </div>
+
+  <!-- 관리자 로그인 -->
+  <div class="login-box" id="admin-login-box" style="display:none;">
+    <h2>⚙️ 관리자 로그인</h2>
+    <div class="form-row">
+      <label for="adm-id">관리자 ID</label>
+      <input type="text" id="adm-id" placeholder="admin" autocomplete="username">
+    </div>
+    <div class="form-row">
+      <label for="adm-pw">비밀번호</label>
+      <input type="password" id="adm-pw" placeholder="비밀번호" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="adm-err"></div>
+    <button type="button" class="btn login-btn" id="btn-admin-login">관리자 로그인</button>
+    <div class="login-switch"><a id="link-to-employee">← 직원 로그인으로</a></div>
+  </div>
+</div>
+
+<script src="./common/common.js"></script>
+<script src="./login.js"></script>
+</body>
+</html>
