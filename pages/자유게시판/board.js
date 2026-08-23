@@ -1,9 +1,12 @@
 /* board.html 전용 데이터 & 로직 */
 
 let posts = loadData("posts", [
-  { id: uid(), title: "이번 달 안전교육 일정 공유드립니다", author: "김기관", date: formatDate(new Date()), content: "이번 달 정기 안전교육은 3주차에 진행됩니다. 많은 참여 부탁드립니다." },
+  { id: uid(), title: "이번 달 안전교육 일정 공유드립니다", author: "김기관", date: formatDate(new Date()), content: "이번 달 정기 안전교육은 3주차에 진행됩니다. 많은 참여 부탁드립니다.", comments: [] },
 ]);
 saveData("posts", posts);
+
+// 댓글 작성자 기본값으로 쓸 로그인한 직원 이름 (없으면 빈 값 — 관리자 세션 등)
+let profile = loadData("profile", null);
 
 /* ---------- CRUD ---------- */
 
@@ -34,6 +37,23 @@ function deletePost(id) {
   renderPostList();
 }
 
+/* ---------- 댓글 ---------- */
+
+function addComment(postId, author, content) {
+  const post = getPost(postId);
+  if (!post) return;
+  if (!post.comments) post.comments = [];
+  post.comments.push({ id: uid(), author, content, date: formatDate(new Date()) });
+  saveData("posts", posts);
+}
+
+function deleteComment(postId, commentId) {
+  const post = getPost(postId);
+  if (!post || !post.comments) return;
+  post.comments = post.comments.filter((c) => c.id !== commentId);
+  saveData("posts", posts);
+}
+
 /* ---------- 렌더링 ---------- */
 
 const postPager = { page: 0, pageSize: 10 };
@@ -62,7 +82,7 @@ function renderPostList() {
     .map(
       (p) => `
       <tr>
-        <td class="title-cell">${p.title}</td>
+        <td class="title-cell"><a data-action="detail" data-id="${p.id}">${p.title}</a>${p.comments && p.comments.length ? ` <span class="badge neutral">💬 ${p.comments.length}</span>` : ""}</td>
         <td>${p.author}</td>
         <td class="mobile-hide">${p.date}</td>
         <td class="actions">
@@ -73,6 +93,9 @@ function renderPostList() {
     )
     .join("");
 
+  tbody.querySelectorAll("[data-action='detail']").forEach((el) => {
+    el.addEventListener("click", () => openDetail(el.dataset.id));
+  });
   tbody.querySelectorAll("[data-action='edit']").forEach((btn) => {
     btn.addEventListener("click", () => openModal(btn.dataset.id));
   });
@@ -81,6 +104,61 @@ function renderPostList() {
   });
 
   renderPaginationOrAll("board-pager", postPager, reversed.length, renderPostList, skipPaging);
+}
+
+/* ---------- 상세보기 (본문 + 댓글) ---------- */
+
+let currentDetailId = null;
+
+function renderCommentList(post) {
+  const comments = post.comments || [];
+  document.getElementById("comment-count").textContent = comments.length ? `(${comments.length})` : "";
+
+  document.getElementById("comment-list").innerHTML = comments.length
+    ? comments
+        .map(
+          (c) => `
+      <div class="comment-item">
+        <div class="comment-head">
+          <span class="comment-author">${c.author}</span>
+          <span>
+            <span class="comment-date">${c.date}</span>
+            <button type="button" class="comment-del" data-id="${c.id}">삭제</button>
+          </span>
+        </div>
+        <div class="comment-content">${c.content}</div>
+      </div>`
+        )
+        .join("")
+    : `<div class="empty-state">첫 댓글을 남겨보세요.</div>`;
+
+  document.getElementById("comment-list").querySelectorAll(".comment-del").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!confirm("댓글을 삭제하시겠습니까?")) return;
+      deleteComment(currentDetailId, btn.dataset.id);
+      openDetail(currentDetailId);
+      renderPostList();
+    });
+  });
+}
+
+function openDetail(id) {
+  const item = getPost(id);
+  if (!item) return;
+  currentDetailId = id;
+
+  document.getElementById("detail-title").textContent = item.title;
+  document.getElementById("detail-meta").textContent = `${item.author} · ${item.date}`;
+  document.getElementById("detail-content").textContent = item.content;
+  document.getElementById("c-author").value = (profile && profile.name) || "";
+  renderCommentList(item);
+
+  document.getElementById("detail-backdrop").classList.add("open");
+}
+
+function closeDetail() {
+  document.getElementById("detail-backdrop").classList.remove("open");
+  currentDetailId = null;
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
@@ -114,6 +192,23 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
+  });
+
+  document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
+  document.getElementById("btn-detail-close2").addEventListener("click", closeDetail);
+  document.getElementById("detail-backdrop").addEventListener("click", (e) => {
+    if (e.target.id === "detail-backdrop") closeDetail();
+  });
+
+  document.getElementById("comment-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const author = document.getElementById("c-author").value.trim();
+    const content = document.getElementById("c-content").value.trim();
+    if (!author || !content) return;
+    addComment(currentDetailId, author, content);
+    document.getElementById("c-content").value = "";
+    openDetail(currentDetailId);
+    renderPostList();
   });
 
   document.getElementById("board-form").addEventListener("submit", (e) => {

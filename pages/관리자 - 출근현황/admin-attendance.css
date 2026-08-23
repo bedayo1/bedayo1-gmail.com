@@ -1,0 +1,10 @@
+/* admin-attendance.html 전용 스타일 (출근현황 페이지에서만 사용) */
+
+#att-date {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 9px 10px;
+  font-size: 14px;
+  color: var(--color-text);
+}

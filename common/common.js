@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { key: "admin-employee", label: "직원 관리", path: "pages/관리자 - 직원관리/admin-employee.html", icon: "👥", group: "admin" },
   { key: "admin-notice", label: "공지·지시사항 관리", path: "pages/관리자- 공지'지시사항관리/admin-notice.html", icon: "📢", group: "admin" },
   { key: "admin-schedule", label: "다이아·스케줄 관리", path: "pages/관리자 - 다이아(스케쥴) 관리/admin-schedule.html", icon: "📅", group: "admin" },
+  { key: "admin-attendance", label: "출근현황", path: "pages/관리자 - 출근현황/admin-attendance.html", icon: "🕐", group: "admin" },
   { key: "admin-education", label: "일일안전교육 모니터링", path: "pages/관리자 - 일일교육모니터링/admin-education.html", icon: "📈", group: "admin" },
 ];
 
@@ -335,7 +336,9 @@ function getAttendancesFor(empId) {
 }
 
 // 응시 횟수/평균점수/정답률 등 전체 요약
+// (직무배제로 종료된 날은 애초에 문제를 풀지 않았으므로 "응시"에서 제외한다)
 function summarizeEducation(records) {
+  records = records.filter((r) => !r.excluded);
   let totalQuestions = 0;
   let totalCorrect = 0;
   let scoreSum = 0;
@@ -357,7 +360,7 @@ function summarizeEducation(records) {
 // 오답이 있었던 매뉴얼(문제)을 오답률 순으로 정리 — "취약분야"
 function analyzeWeakAreas(records, limit) {
   const stats = {};
-  records.forEach((r) => {
+  records.filter((r) => !r.excluded).forEach((r) => {
     ((r.education && r.education.items) || []).forEach((item) => {
       const key = `${item.type}::${item.title}`;
       if (!stats[key]) stats[key] = { type: item.type, title: item.title, total: 0, wrong: 0 };

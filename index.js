@@ -41,6 +41,18 @@ function renderAttendanceCard() {
   const mount = document.getElementById("attendance-card");
   const record = getTodayAttendance();
 
+  if (record && record.excluded) {
+    mount.innerHTML = `
+      <div class="attendance-info">
+        <div class="attendance-title">${profile.name} 님, 오늘은 직무배제 대상입니다</div>
+        <div class="attendance-desc">승무적합성검사 결과가 관리자에게 보고되었습니다. 관리자의 안내에 따라주세요.</div>
+      </div>
+      <button type="button" class="attendance-done-badge attendance-excluded-badge" id="btn-attendance-detail">🚫 직무배제 · 상세보기</button>
+    `;
+    document.getElementById("btn-attendance-detail").addEventListener("click", () => openAttendanceDetail(record));
+    return;
+  }
+
   if (record) {
     mount.innerHTML = `
       <div class="attendance-info">
@@ -187,17 +199,24 @@ function getTodayUrgentNotices() {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+// 음주/약물/심신이상 중 하나라도 해당하면 직무배제 대상 — 승무적합성검사(2단계)에서만 의미가 있다.
+function isFitnessDisqualified() {
+  if (!wizardData) return false;
+  return (
+    wizardData.drinking === "유" ||
+    parseFloat(wizardData.drinkingLevel || "0") >= 0.02 ||
+    wizardData.drugUse === "유" ||
+    wizardData.mentalStatus === "이상있음"
+  );
+}
+
 function canProceedCurrentStep() {
   if (wizardStep === 1) {
     return !!wizardData.actualTime; // 편성번호는 선택 입력 — 없어도 다음 단계로 진행 가능
   }
   if (wizardStep === 2) {
     if (!wizardData.restHours.trim()) return false;
-    if (wizardData.drinking === "유") return false;
-    if (parseFloat(wizardData.drinkingLevel || "0") >= 0.02) return false;
-    if (wizardData.drugUse === "유") return false;
-    if (wizardData.mentalStatus === "이상있음") return false;
-    return true;
+    return true; // 직무배제 대상이어도 "직무배제 보고" 버튼은 눌러야 하므로 여기서 막지 않는다.
   }
   if (wizardStep === 3) {
     const urgent = getTodayUrgentNotices();
@@ -213,7 +232,14 @@ function updateWizardButtons() {
   const prevBtn = document.getElementById("btn-wizard-prev");
   const nextBtn = document.getElementById("btn-wizard-next");
   prevBtn.style.visibility = wizardStep === 1 ? "hidden" : "visible";
-  nextBtn.textContent = wizardStep === 4 ? "출근 완료" : "다음";
+
+  if (wizardStep === 2 && isFitnessDisqualified()) {
+    nextBtn.textContent = "🚫 직무배제 보고";
+    nextBtn.classList.add("danger");
+  } else {
+    nextBtn.textContent = wizardStep === 4 ? "출근 완료" : "다음";
+    nextBtn.classList.remove("danger");
+  }
   nextBtn.disabled = !canProceedCurrentStep();
 }
 
@@ -244,12 +270,7 @@ function renderStep1Html() {
 }
 
 function renderStep2Html() {
-  const disqualified = !canProceedCurrentStep() && (
-    wizardData.drinking === "유" ||
-    parseFloat(wizardData.drinkingLevel || "0") >= 0.02 ||
-    wizardData.drugUse === "유" ||
-    wizardData.mentalStatus === "이상있음"
-  );
+  const disqualified = isFitnessDisqualified();
   return `
     <div class="wizard-section">
       <div class="form-row"><label>사번/성명</label><input type="text" value="${profile.empId} / ${profile.name}" disabled></div>
@@ -278,7 +299,7 @@ function renderStep2Html() {
         </div>
       </div>
       <div class="wizard-alert ${disqualified ? "danger" : ""}" id="w-fitness-alert">
-        ⚠ 음주수치 0.02% 이상 또는 심신 이상 시 즉시 직무배제 대상입니다.${disqualified ? " (현재 직무배제 대상 — 관리자에게 즉시 보고하세요.)" : ""}
+        ⚠ 음주수치 0.02% 이상 또는 심신 이상 시 즉시 직무배제 대상입니다.${disqualified ? " (현재 직무배제 대상입니다. 아래 '직무배제 보고' 버튼을 눌러 관리자에게 보고하세요.)" : ""}
       </div>
     </div>
   `;
@@ -618,6 +639,7 @@ function finishAttendance() {
       })),
       score,
     },
+    excluded: false,
     completedAt: new Date().toISOString(),
   };
 
@@ -631,11 +653,72 @@ function finishAttendance() {
   showToast(`출근이 완료되었습니다. 오늘의 안전교육 점수: ${score}점`);
 }
 
+// 승무적합성검사에서 걸린 경우: 지시전달사항/일일안전교육 없이 여기서 바로 "직무배제" 기록을 남기고 종료한다.
+// 관리자가 출근현황 화면에서 누가·언제·왜 배제됐는지 확인할 수 있도록 하기 위함이다.
+function finishExclusion() {
+  const today = formatDate(new Date());
+
+  const record = {
+    id: uid(),
+    empId: profile.empId,
+    name: profile.name,
+    dept: profile.dept,
+    date: today,
+    dispatch: {
+      formationNo: wizardData.formationNo,
+      assignedTime: wizardData.assignedTime,
+      actualTime: wizardData.actualTime,
+    },
+    fitness: {
+      position: profile.role,
+      restHours: wizardData.restHours,
+      drinking: wizardData.drinking,
+      drinkingLevel: wizardData.drinkingLevel,
+      drugUse: wizardData.drugUse,
+      mentalStatus: wizardData.mentalStatus,
+    },
+    notices: null,
+    education: null,
+    excluded: true,
+    completedAt: new Date().toISOString(),
+  };
+
+  attendances = attendances.filter((a) => !(a.empId === profile.empId && a.date === today));
+  attendances.push(record);
+  saveData("attendances", attendances);
+  lastCompletedRecord = record;
+
+  closeWizard();
+  renderAttendanceCard();
+  showToast("직무배제 내용이 관리자에게 보고되었습니다.");
+}
+
 /* ---------- 출근 상세보기 (완료된 출근 내용 읽기전용 확인) ---------- */
 
 function renderAttendanceDetailHtml(record) {
   const d = record.dispatch;
   const f = record.fitness;
+
+  if (record.excluded) {
+    return `
+      <div class="wizard-alert danger">🚫 승무적합성검사에서 직무배제 대상으로 확인되어, 지시전달사항·일일안전교육 없이 여기서 보고가 종료되었습니다.</div>
+      <div class="wizard-section">
+        <h4>1. 출무시간</h4>
+        <div class="detail-kv"><span>편성번호</span><span>${d.formationNo || "-"}</span></div>
+        <div class="detail-kv"><span>지정출무시간</span><span>${d.assignedTime || "-"}</span></div>
+        <div class="detail-kv"><span>실제출무시간</span><span>${d.actualTime || "-"}</span></div>
+      </div>
+      <div class="wizard-section">
+        <h4>2. 승무적합성검사</h4>
+        <div class="detail-kv"><span>직급</span><span>${f.position}</span></div>
+        <div class="detail-kv"><span>휴양시간</span><span>${f.restHours}</span></div>
+        <div class="detail-kv"><span>음주유무 / 수치</span><span>${f.drinking} / ${f.drinkingLevel}</span></div>
+        <div class="detail-kv"><span>약물복용</span><span>${f.drugUse}</span></div>
+        <div class="detail-kv"><span>심신 이상여부</span><span>${f.mentalStatus}</span></div>
+      </div>
+    `;
+  }
+
   const n = record.notices || { urgent: [], ackedNoticeIds: [], directives: [] };
   const edu = record.education;
 
@@ -726,6 +809,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-wizard-next").addEventListener("click", () => {
     if (!canProceedCurrentStep()) return;
+    if (wizardStep === 2 && isFitnessDisqualified()) {
+      finishExclusion();
+      return;
+    }
     if (wizardStep < 4) {
       wizardStep++;
       renderWizardSteps();

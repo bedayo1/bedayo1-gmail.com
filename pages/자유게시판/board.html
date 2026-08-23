@@ -41,6 +41,34 @@
 
 <div id="site-footer"></div>
 
+<!-- 상세보기 (본문 + 댓글) -->
+<div class="modal-backdrop" id="detail-backdrop">
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="detail-title">-</h2>
+      <button type="button" class="wizard-close" id="btn-detail-close">×</button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-section">
+        <div class="board-detail-meta" id="detail-meta"></div>
+        <p class="board-detail-content" id="detail-content"></p>
+      </div>
+      <div class="wizard-section">
+        <h4>댓글 <span id="comment-count"></span></h4>
+        <div id="comment-list"></div>
+        <form id="comment-form" class="comment-form">
+          <input type="text" id="c-author" placeholder="이름" required>
+          <input type="text" id="c-content" placeholder="댓글을 입력하세요" required>
+          <button type="submit" class="btn small">등록</button>
+        </form>
+      </div>
+    </div>
+    <div class="modal-actions wizard-actions">
+      <button type="button" class="btn secondary" id="btn-detail-close2">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal">

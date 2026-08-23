@@ -40,26 +40,16 @@
   background: rgba(50, 212, 120, 0.25);
 }
 
-/* ---------- 출근 마법사 모달 ---------- */
-.wizard-modal {
-  max-width: 960px;
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  overflow: hidden;
+.attendance-excluded-badge {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
 }
 
-.wizard-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
+.attendance-excluded-badge:hover {
+  filter: brightness(1.15);
 }
 
+/* ---------- 출근 마법사 단계 표시 (이 모달을 쓰는 다른 화면엔 없는, 출근 절차 전용 요소) ---------- */
 .wizard-steps {
   display: flex;
   align-items: center;
@@ -108,47 +98,6 @@
 
 .wizard-steps .arrow {
   color: var(--color-border);
-}
-
-.wizard-close {
-  background: transparent;
-  border: none;
-  color: var(--color-text-muted);
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.wizard-close:hover {
-  color: var(--color-text);
-}
-
-.wizard-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.wizard-actions {
-  padding: 16px 20px;
-  margin-top: 0;
-  border-top: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.wizard-section {
-  margin-bottom: 20px;
-}
-
-.wizard-section:last-child {
-  margin-bottom: 0;
-}
-
-.wizard-section h4 {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin: 0 0 8px;
 }
 
 .radio-row {
