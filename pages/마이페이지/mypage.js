@@ -35,9 +35,15 @@ function renderEducationHistory() {
   document.getElementById("edu-stat-avg").textContent = `${summary.avgScore}점`;
   document.getElementById("edu-stat-accuracy").textContent = `${summary.accuracy}%`;
 
+  const retrainingEl = document.getElementById("my-retraining-alert");
+  retrainingEl.innerHTML = needsRetraining(summary)
+    ? `<div class="wizard-alert danger">🔴 최근 정답률이 ${RETRAINING_ACCURACY_THRESHOLD}% 미만입니다. 재교육이 필요할 수 있어요.</div>`
+    : "";
+
+  document.getElementById("my-vehicle-stats").innerHTML = renderVehicleTypeStatsHtml(analyzeVehicleTypeStats(records));
   document.getElementById("my-weak-areas").innerHTML = renderWeakAreasHtml(analyzeWeakAreas(records, 8));
 
-  const recent = records.slice(0, 5);
+  const recent = records.filter((r) => !r.excluded).slice(0, 5);
   document.getElementById("my-edu-history").innerHTML = recent.length
     ? recent
         .map(
@@ -49,6 +55,23 @@ function renderEducationHistory() {
         )
         .join("")
     : `<div class="empty-state">아직 응시 이력이 없습니다. 홈 화면에서 출근을 완료하면 여기에 기록됩니다.</div>`;
+}
+
+function renderCourseCompletions() {
+  const allCourses = loadData("courses", []);
+  const myCompletions = getCompletionsFor(profile.empId);
+
+  document.getElementById("course-stat-count").textContent = myCompletions.length;
+  document.getElementById("course-stat-total").textContent = allCourses.length;
+
+  document.getElementById("my-course-completions").innerHTML = myCompletions.length
+    ? myCompletions
+        .map((c) => {
+          const course = allCourses.find((co) => co.id === c.courseId);
+          return `<div class="notice-card-item"><div class="notice-card-title">${course ? course.name : "(삭제된 과정)"}</div><div class="notice-card-meta">이수일 ${c.completedAt}</div></div>`;
+        })
+        .join("")
+    : `<div class="empty-state">아직 이수 처리한 교육과정이 없습니다. 교육과정 관리에서 이수 처리할 수 있습니다.</div>`;
 }
 
 function changePassword(oldPw, newPw1, newPw2) {
@@ -65,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLayout("mypage");
   renderProfile();
   renderEducationHistory();
+  renderCourseCompletions();
 
   document.getElementById("pw-form").addEventListener("submit", (e) => {
     e.preventDefault();
