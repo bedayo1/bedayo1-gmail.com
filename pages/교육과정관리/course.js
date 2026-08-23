@@ -8,6 +8,9 @@ let courses = loadData("courses", [
 ]);
 saveData("courses", courses); // 최초 로드시 시드 데이터를 즉시 영속화해 다른 페이지(index.js)에서도 바로 조회 가능
 
+// 로그인한 직원 본인의 이수 처리 여부를 표시하기 위해 사용한다 (관리자 세션이면 null).
+let profile = loadData("profile", null);
+
 const STATUS_LABEL = {
   planned: { text: "예정", cls: "neutral" },
   ongoing: { text: "진행중", cls: "info" },
@@ -64,7 +67,7 @@ function renderCourseList() {
   const skipPaging = !!courseSearch.query.trim() || isAppViewport();
 
   if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state">등록된 교육과정이 없습니다.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">등록된 교육과정이 없습니다.</div></td></tr>`;
     renderPaginationOrAll("course-pager", coursePager, 0, renderCourseList, skipPaging);
     return;
   }
@@ -74,12 +77,18 @@ function renderCourseList() {
   tbody.innerHTML = pageItems
     .map((c) => {
       const status = STATUS_LABEL[c.status] || STATUS_LABEL.planned;
+      const completedCount = countCourseCompletions(c.id);
+      const iCompleted = profile && isCourseCompletedBy(c.id, profile.empId);
       return `
       <tr>
         <td class="title-cell">${c.name}</td>
         <td>${c.target}</td>
         <td class="mobile-hide">${c.hours}시간</td>
         <td><span class="badge ${status.cls}">${status.text}</span></td>
+        <td>
+          ${profile ? `<button type="button" class="btn ${iCompleted ? "secondary" : ""} small" data-action="complete" data-id="${c.id}">${iCompleted ? "✅ 이수완료" : "이수 처리"}</button>` : ""}
+          <span class="notice-card-meta">이수 ${completedCount}명</span>
+        </td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${c.id}">수정</button>
           <button class="btn danger small" data-action="delete" data-id="${c.id}">삭제</button>
@@ -88,6 +97,13 @@ function renderCourseList() {
     })
     .join("");
 
+  tbody.querySelectorAll("[data-action='complete']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!profile) return;
+      toggleCourseCompletion(btn.dataset.id, profile.empId, profile.name);
+      renderCourseList();
+    });
+  });
   tbody.querySelectorAll("[data-action='edit']").forEach((btn) => {
     btn.addEventListener("click", () => openModal(btn.dataset.id));
   });

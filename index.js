@@ -90,16 +90,23 @@ function shuffleArray(arr) {
 }
 
 function buildEducationPool() {
-  const malfunctions = loadData("malfunctions", []).map((m) => ({
-    type: "고장처치",
-    title: m.title,
-    answerText: m.procedure || m.symptom || "",
-    questionText: `"${m.title}" 발생 시 올바른 조치요령은?`,
-    raw: m,
-  }));
+  // ATO는 자동운전장치로 기관사 업무 영역이라, 차장에게는 ATO 고장처치 문제를 아예 출제하지 않는다.
+  const isEngineer = profile.role === "기관사";
+
+  const malfunctions = loadData("malfunctions", [])
+    .filter((m) => isEngineer || m.vehicleType !== "ATO")
+    .map((m) => ({
+      type: "고장처치",
+      title: m.title,
+      vehicleType: m.vehicleType,
+      answerText: m.procedure || m.symptom || "",
+      questionText: `"${m.title}" 발생 시 올바른 조치요령은?`,
+      raw: m,
+    }));
   const emergencies = loadData("emergencies", []).map((e) => ({
     type: "이례상황",
     title: e.title,
+    vehicleType: null,
     answerText: (e.procedureSteps && e.procedureSteps[0]) || e.condition || "",
     questionText: `"${e.title}" 상황에서 가장 먼저 취해야 할 조치는?`,
     raw: e,
@@ -125,6 +132,7 @@ function buildQuizQuestion(item, pool) {
   return {
     type: item.type,
     title: item.title,
+    vehicleType: item.vehicleType || null,
     question: item.questionText,
     choices: choiceTexts,
     correctIndex,
@@ -630,6 +638,7 @@ function finishAttendance() {
       items: wizardData.quiz.map((q) => ({
         type: q.type,
         title: q.title,
+        vehicleType: q.vehicleType || null,
         question: q.question,
         choices: q.choices,
         selectedIndex: q.selectedIndex,

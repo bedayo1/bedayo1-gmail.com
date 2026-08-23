@@ -421,6 +421,83 @@ function renderWeakAreasHtml(weakAreas) {
     </div>`;
 }
 
+// 차종별(VVVF/저항차/ATO) 정답률 — 고장처치 문제 중 vehicleType 이 있는 것만 집계한다.
+// ATO는 기관사에게만 출제되므로(index.js buildEducationPool 참고) 차장은 자연히 ATO 항목이 비어있게 된다.
+function analyzeVehicleTypeStats(records) {
+  const stats = {};
+  records
+    .filter((r) => !r.excluded)
+    .forEach((r) => {
+      ((r.education && r.education.items) || []).forEach((item) => {
+        if (!item.vehicleType) return;
+        if (!stats[item.vehicleType]) stats[item.vehicleType] = { vehicleType: item.vehicleType, total: 0, correct: 0 };
+        stats[item.vehicleType].total += 1;
+        if (item.correct) stats[item.vehicleType].correct += 1;
+      });
+    });
+  return Object.values(stats).map((s) => ({ ...s, accuracy: s.total ? Math.round((s.correct / s.total) * 100) : 0 }));
+}
+
+function renderVehicleTypeStatsHtml(stats) {
+  if (!stats || stats.length === 0) {
+    return `<div class="empty-state">차종별 응시 데이터가 없습니다.</div>`;
+  }
+  return `
+    <div class="vt-stat-list">
+      ${stats
+        .map(
+          (s) => `
+        <div class="vt-stat-item">
+          <span class="badge info">${s.vehicleType}</span>
+          <span class="vt-stat-accuracy">${s.accuracy}%</span>
+          <span class="vt-stat-detail">(${s.correct}/${s.total}문제)</span>
+        </div>`
+        )
+        .join("")}
+    </div>`;
+}
+
+// 전체 정답률이 기준치 미만이면 재교육 대상으로 본다 (응시 이력이 있는 사람만 대상).
+const RETRAINING_ACCURACY_THRESHOLD = 30;
+function needsRetraining(summary) {
+  return summary.count > 0 && summary.totalQuestions > 0 && summary.accuracy < RETRAINING_ACCURACY_THRESHOLD;
+}
+
+/* ---------- 교육과정 이수 (교육과정 관리 / 마이페이지 공용) ---------- */
+/* 이수 기록은 courseCompletions = [{id, courseId, empId, name, completedAt}] 로 별도 저장한다
+   (courses 자체는 과정 "카탈로그"일 뿐이라, 누가 이수했는지는 별도 컬렉션으로 관리). */
+
+function getCourseCompletions() {
+  return loadData("courseCompletions", []);
+}
+
+function isCourseCompletedBy(courseId, empId) {
+  return getCourseCompletions().some((c) => c.courseId === courseId && c.empId === empId);
+}
+
+function countCourseCompletions(courseId) {
+  return getCourseCompletions().filter((c) => c.courseId === courseId).length;
+}
+
+// 이수 처리/취소를 토글한다. 토글 후 상태(이수 처리됐으면 true)를 반환한다.
+function toggleCourseCompletion(courseId, empId, name) {
+  let completions = getCourseCompletions();
+  const exists = completions.some((c) => c.courseId === courseId && c.empId === empId);
+  if (exists) {
+    completions = completions.filter((c) => !(c.courseId === courseId && c.empId === empId));
+  } else {
+    completions.push({ id: uid(), courseId, empId, name, completedAt: formatDate(new Date()) });
+  }
+  saveData("courseCompletions", completions);
+  return !exists;
+}
+
+function getCompletionsFor(empId) {
+  return getCourseCompletions()
+    .filter((c) => c.empId === empId)
+    .sort((a, b) => (a.completedAt < b.completedAt ? 1 : -1));
+}
+
 /* ---------- 목록 검색(제목/내용 선택) — 모든 목록형 페이지 공용 ---------- */
 /* 사용법:
      const xxxSearch = { field: "title", query: "" };

@@ -31,11 +31,13 @@ function renderStats(summaries) {
     : 0;
   const accuracy = totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
   const noAttempt = summaries.length - withRecords.length;
+  const retrainingCount = summaries.filter((s) => needsRetraining(s)).length;
 
   document.getElementById("stat-total-count").textContent = totalCount;
   document.getElementById("stat-avg-score").textContent = `${avgScore}점`;
   document.getElementById("stat-accuracy").textContent = `${accuracy}%`;
   document.getElementById("stat-no-attempt").textContent = `${noAttempt}명`;
+  document.getElementById("stat-retraining").textContent = `${retrainingCount}명`;
 }
 
 function renderList() {
@@ -67,10 +69,11 @@ function renderList() {
   tbody.innerHTML = pageItems
     .map((s) => {
       const topWeak = s.weak[0] ? `${s.weak[0].title} (오답 ${s.weak[0].wrong}/${s.weak[0].total})` : "-";
+      const retraining = needsRetraining(s);
       return `
       <tr>
         <td class="mobile-hide">${s.empId}</td>
-        <td class="title-cell">${s.name}</td>
+        <td class="title-cell">${s.name}${retraining ? ` <span class="badge retraining-badge">🔴 재교육 필요</span>` : ""}</td>
         <td>${s.dept}</td>
         <td>${s.count ? `${s.count}회` : `<span class="badge neutral">미응시</span>`}</td>
         <td>${s.count ? `${s.avgScore}점` : "-"}</td>
@@ -95,9 +98,10 @@ function openDetail(empId) {
   const s = summaries.find((x) => x.empId === empId);
   if (!s) return;
 
-  document.getElementById("edu-detail-title").textContent = `${s.name} (${s.empId}) · ${s.dept}`;
+  document.getElementById("edu-detail-title").textContent = `${s.name} (${s.empId}) · ${s.dept}${needsRetraining(s) ? " · 🔴 재교육 필요" : ""}`;
 
-  const recentRecords = s.records.slice(0, 5);
+  const eduRecords = s.records.filter((r) => !r.excluded);
+  const recentRecords = eduRecords.slice(0, 5);
   const historyHtml = recentRecords
     .map(
       (r) => `
@@ -115,11 +119,15 @@ function openDetail(empId) {
       <div class="mini-stat"><div class="mini-num">${s.accuracy}%</div><div class="mini-lbl">정답률</div></div>
     </div>
     <div class="wizard-section">
+      <h4>차종별 정답률</h4>
+      ${renderVehicleTypeStatsHtml(analyzeVehicleTypeStats(s.records))}
+    </div>
+    <div class="wizard-section">
       <h4>취약분야 (오답이 있었던 매뉴얼)</h4>
       ${renderWeakAreasHtml(s.weak)}
     </div>
     <div class="wizard-section">
-      <h4>최근 응시 이력${s.records.length > 5 ? ` (최근 5건 · 전체 ${s.records.length}건)` : ""}</h4>
+      <h4>최근 응시 이력${eduRecords.length > 5 ? ` (최근 5건 · 전체 ${eduRecords.length}건)` : ""}</h4>
       ${historyHtml || `<div class="empty-state">응시 이력이 없습니다.</div>`}
     </div>
   `;

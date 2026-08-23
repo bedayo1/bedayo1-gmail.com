@@ -1002,6 +1002,38 @@ body {
   white-space: nowrap;
 }
 
+.vt-stat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vt-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.vt-stat-accuracy {
+  font-weight: 700;
+  font-family: var(--font-mono), monospace;
+  color: var(--color-primary);
+}
+
+.vt-stat-detail {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.retraining-badge {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
 .edu-history-day {
   border-top: 1px solid var(--color-border);
   padding-top: 14px;
