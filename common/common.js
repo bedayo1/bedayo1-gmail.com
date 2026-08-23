@@ -300,6 +300,26 @@ function renderAttachmentList(attachments) {
   return `<div class="attachment-list">${items}</div>`;
 }
 
+/* ---------- 긴급공지(사고사례) 노출 여부 판정 — accident.js·index.js 공용 ---------- */
+/* "긴급 공지로 노출" 체크(noticeActive)를 명시적으로 켠 항목만 후보가 되고(opt-in),
+   그중에서도 noticeStart/noticeEnd(YYYY-MM-DD, 둘 다 선택) 기간 안에 있어야 실제로 노출된다.
+   시작/종료일을 비워두면 각각 "즉시부터"/"계속"으로 취급한다. */
+function isNoticeCurrentlyActive(item) {
+  if (!item.noticeActive) return false;
+  const today = formatDate(new Date());
+  if (item.noticeStart && today < item.noticeStart) return false;
+  if (item.noticeEnd && today > item.noticeEnd) return false;
+  return true;
+}
+
+// 운전지시사항(공지·지시사항 관리)은 별도 on/off 없이 노출기간(선택)만으로 걸러낸다 — 지정 안 하면 항상 노출.
+function isWithinNoticePeriod(item) {
+  const today = formatDate(new Date());
+  if (item.startDate && today < item.startDate) return false;
+  if (item.endDate && today > item.endDate) return false;
+  return true;
+}
+
 /* ---------- 일일안전교육 학습결과 (출근 시 응시한 퀴즈) — 마이페이지·관리자 모니터링 공용 ---------- */
 /* attendances 레코드 하나의 education.items 는
    [{ type, title, question, choices, selectedIndex, correctIndex, correct }, ...] 형태다. */
@@ -361,7 +381,7 @@ function renderQuizReviewHtml(items) {
       const choices = q.choices || [];
       return `
     <div class="quiz-question-card">
-      <div class="quiz-q-index">${q.type} · 문제 ${qi + 1} · ${q.title} · ${q.correct ? "✅ 정답" : "❌ 오답"}</div>
+      <div class="quiz-q-index">${q.isReview ? "🔁 복습 · " : ""}${q.type} · 문제 ${qi + 1} · ${q.title} · ${q.correct ? "✅ 정답" : "❌ 오답"}</div>
       <div class="quiz-q-text">${q.question}</div>
       <div class="quiz-choices">
         ${choices

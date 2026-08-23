@@ -74,6 +74,7 @@ function renderEmployeeList() {
         <td>${e.role}</td>
         <td>${e.dept}</td>
         <td class="actions">
+          <button class="btn secondary small" data-action="reset-pw" data-id="${e.empId}">비번초기화</button>
           <button class="btn secondary small" data-action="edit" data-id="${e.id}">수정</button>
           <button class="btn danger small" data-action="delete" data-id="${e.id}">삭제</button>
         </td>
@@ -86,6 +87,14 @@ function renderEmployeeList() {
   });
   tbody.querySelectorAll("[data-action='delete']").forEach((btn) => {
     btn.addEventListener("click", () => deleteEmployee(btn.dataset.id));
+  });
+  tbody.querySelectorAll("[data-action='reset-pw']").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const empId = btn.dataset.id;
+      if (!confirm(`사번 ${empId}의 비밀번호를 초기 비밀번호(1234)로 되돌릴까요?`)) return;
+      setEmployeePassword(empId, "1234");
+      showToast("비밀번호가 1234로 초기화되었습니다.");
+    });
   });
 
   renderPaginationOrAll("admin-employee-pager", employeePager, filtered.length, renderEmployeeList, skipPaging);

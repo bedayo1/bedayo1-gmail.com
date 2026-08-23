@@ -62,7 +62,10 @@ function renderAdminNoticeList() {
     .map(
       (n) => `
       <tr>
-        <td class="title-cell">${n.title}</td>
+        <td class="title-cell">
+          ${n.title}
+          ${n.type === "지시사항" && !isWithinNoticePeriod(n) ? `<span class="badge neutral">기간외</span>` : ""}
+        </td>
         <td><span class="badge ${n.type === "지시사항" ? "danger" : "info"}">${n.type}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${n.id}">수정</button>
@@ -93,6 +96,8 @@ function openModal(id) {
   document.getElementById("f-title").value = item ? item.title : "";
   document.getElementById("f-type").value = item ? item.type : "공지사항";
   document.getElementById("f-content").value = item ? item.content : "";
+  document.getElementById("f-start-date").value = item ? item.startDate || "" : "";
+  document.getElementById("f-end-date").value = item ? item.endDate || "" : "";
   title.textContent = item ? "수정" : "등록";
 
   backdrop.classList.add("open");
@@ -122,6 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
       title: document.getElementById("f-title").value.trim(),
       type: document.getElementById("f-type").value,
       content: document.getElementById("f-content").value.trim(),
+      startDate: document.getElementById("f-start-date").value,
+      endDate: document.getElementById("f-end-date").value,
     };
 
     if (id) {

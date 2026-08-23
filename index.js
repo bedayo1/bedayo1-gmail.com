@@ -119,13 +119,32 @@ function buildQuizQuestion(item, pool) {
     selectedIndex: null,
     raw: item.raw,
     manualOpen: false,
+    isReview: false,
   };
 }
 
+// 취약분야 우선 출제: 이전에 오답이 있었던 매뉴얼이 있으면 하루 3문제 중 1문제는 그 매뉴얼에서
+// 우선 뽑아 "복습" 문제로 출제하고, 나머지는 기존처럼 전체 풀에서 랜덤 출제한다.
+// 응시 이력이 없거나 오답 이력이 없는 직원은 기존과 동일하게 완전 랜덤이다.
 function pickDailyEducationQuiz() {
   const pool = buildEducationPool();
-  const picked = shuffleArray(pool).slice(0, 3);
-  return picked.map((item) => buildQuizQuestion(item, pool));
+
+  const weakAreas = analyzeWeakAreas(getAttendancesFor(profile.empId), 5);
+  const weakTitles = new Set(weakAreas.map((w) => w.title));
+  const weakItems = shuffleArray(pool.filter((item) => weakTitles.has(item.title)));
+
+  const reviewPicks = weakItems.slice(0, Math.min(weakItems.length, 1));
+  const reviewTitleSet = new Set(reviewPicks.map((i) => i.title));
+
+  const remainingPool = pool.filter((item) => !reviewTitleSet.has(item.title));
+  const randomPicks = shuffleArray(remainingPool).slice(0, 3 - reviewPicks.length);
+
+  const picked = shuffleArray([...reviewPicks, ...randomPicks]);
+  return picked.map((item) => {
+    const q = buildQuizQuestion(item, pool);
+    q.isReview = reviewTitleSet.has(item.title);
+    return q;
+  });
 }
 
 /* ---------- 마법사 열기/닫기 ---------- */
@@ -160,10 +179,12 @@ function confirmCloseWizard() {
 /* ---------- 단계 이동 ---------- */
 
 function getTodayUrgentNotices() {
-  // "긴급 공지"는 최근 등록된 사고사례 1건을 노출한다.
-  // 노출 기간/시간대 설정은 차후 관리자 페이지에서 구현 예정.
+  // "긴급 공지"는 사고사례에서 관리자가 "긴급 공지로 노출"을 켠 항목만, 그중에서도
+  // 설정한 노출기간(선택) 안에 있는 것만 보여준다 (accident.js 수정 화면에서 설정).
   const accidents = loadData("accidents", []);
-  return [...accidents].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 1);
+  return accidents
+    .filter((a) => isNoticeCurrentlyActive(a))
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
 function canProceedCurrentStep() {
@@ -377,7 +398,9 @@ function renderStep3Html() {
         .join("")
     : `<div class="empty-state">등록된 긴급 공지가 없습니다.</div>`;
 
-  const directives = loadData("adminNotices", []).filter((n) => n.type === "지시사항");
+  const directives = loadData("adminNotices", []).filter(
+    (n) => n.type === "지시사항" && isWithinNoticePeriod(n)
+  );
   const directiveHtml = directives.length
     ? directives
         .map(
@@ -453,7 +476,7 @@ function renderStep4Html() {
       .map(
         (q, qi) => `
     <div class="quiz-question-card">
-      <div class="quiz-q-index">${q.type} · 문제 ${qi + 1} · ${q.title}</div>
+      <div class="quiz-q-index">${q.isReview ? "🔁 복습 · " : ""}${q.type} · 문제 ${qi + 1} · ${q.title}</div>
       <button type="button" class="btn secondary small quiz-manual-toggle" data-qi="${qi}">${q.manualOpen ? "📖 매뉴얼 닫기" : "📖 관련 매뉴얼 보기"}</button>
       <div class="quiz-manual-ref" style="display:${q.manualOpen ? "block" : "none"}">${renderManualRefBody(q)}</div>
       <div class="quiz-q-text">${q.question}</div>
@@ -578,7 +601,7 @@ function finishAttendance() {
       urgent: getTodayUrgentNotices(), // 상세보기에서 원문 그대로 다시 보여주기 위해 사고사례 전체 항목을 그대로 저장한다.
       ackedNoticeIds: [...wizardData.ackedNoticeIds],
       directives: loadData("adminNotices", [])
-        .filter((n) => n.type === "지시사항")
+        .filter((n) => n.type === "지시사항" && isWithinNoticePeriod(n))
         .map((n) => ({ title: n.title, content: n.content || "" })),
     },
     education: {
@@ -591,6 +614,7 @@ function finishAttendance() {
         selectedIndex: q.selectedIndex,
         correctIndex: q.correctIndex,
         correct: q.selectedIndex === q.correctIndex,
+        isReview: !!q.isReview,
       })),
       score,
     },
