@@ -73,7 +73,7 @@ function renderAccidentList() {
     .map(
       (a) => `
       <tr>
-        <td class="mobile-hide">${a.no || ""}</td>
+        <td class="mobile-hide col-no">${a.no || ""}</td>
         <td class="title-cell"><a data-action="detail" data-id="${a.id}">${a.title}</a></td>
         <td><span class="badge info">${a.line}</span></td>
         <td>${a.date}</td>

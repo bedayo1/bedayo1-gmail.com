@@ -10,7 +10,8 @@
 }
 
 .col-no {
-  width: 70px;
+  width: 90px;
+  white-space: nowrap;
 }
 
 /* 등록/수정 모달: 사진 편집기가 들어가므로 넉넉하게, 드래그로 키울 수 있게 함 */
