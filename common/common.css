@@ -723,6 +723,30 @@ body {
   font-family: var(--font-mono), monospace;
 }
 
+/* ---------- 통계 카드 그리드 (여러 관리자/모니터링 화면에서 공용) ---------- */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  text-align: center;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.stat-card .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
 /* ---------- 목록 검색 (common.js renderListSearch 가 사용) ---------- */
 .list-search {
   display: flex;
@@ -817,6 +841,117 @@ body {
 .pagination-info {
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+/* ---------- 일일안전교육 결과 리뷰 (common.js renderQuizReviewHtml / renderWeakAreasHtml 가 사용) ---------- */
+.quiz-question-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.quiz-question-card .quiz-q-index {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.quiz-question-card .quiz-q-text {
+  font-weight: 600;
+  margin: 10px 0;
+}
+
+.quiz-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-choice-readonly {
+  padding: 9px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: default;
+}
+
+.quiz-choice-readonly.correct {
+  border-color: var(--color-success);
+  background: rgba(50, 212, 120, 0.1);
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.quiz-choice-readonly.wrong {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.detail-kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.detail-kv:last-child {
+  border-bottom: none;
+}
+
+.detail-kv span:first-child {
+  color: var(--color-text-muted);
+}
+
+.detail-kv span:last-child {
+  font-weight: 600;
+  text-align: right;
+}
+
+.weak-area-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weak-area-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+
+.weak-area-title {
+  flex: 1;
+  font-weight: 600;
+}
+
+.weak-area-rate {
+  color: var(--color-danger);
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.edu-history-day {
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.edu-history-day .edu-history-day-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
 }
 
 /* ---------- 토스트 알림 (common.js showToast 가 사용) ---------- */

@@ -24,23 +24,29 @@
     </div>
   </section>
 
-  <section class="mypage-stat-grid">
-    <div class="card mypage-stat-box">
-      <div class="mypage-stat-num" id="stat-accident">0</div>
-      <div class="mypage-stat-label">사고사례</div>
+  <section class="card">
+    <h2 class="page-title" style="font-size:16px;">📚 내 교육 이력</h2>
+    <p class="page-desc" style="margin-top:-6px;">출근할 때 응시한 일일안전교육(고장처치·이례상황 매뉴얼 기반 문제풀이) 결과입니다.</p>
+    <div class="dashboard-grid">
+      <div class="card stat-card">
+        <div class="stat-label">응시 횟수</div>
+        <div class="stat-value" id="edu-stat-count">0</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">평균 점수</div>
+        <div class="stat-value" id="edu-stat-avg">0점</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">정답률</div>
+        <div class="stat-value" id="edu-stat-accuracy">0%</div>
+      </div>
     </div>
-    <div class="card mypage-stat-box">
-      <div class="mypage-stat-num" id="stat-malfunction">0</div>
-      <div class="mypage-stat-label">고장처치 매뉴얼</div>
-    </div>
-    <div class="card mypage-stat-box">
-      <div class="mypage-stat-num" id="stat-emergency">0</div>
-      <div class="mypage-stat-label">이례상황 매뉴얼</div>
-    </div>
-    <div class="card mypage-stat-box">
-      <div class="mypage-stat-num" id="stat-post">0</div>
-      <div class="mypage-stat-label">내가 쓴 게시글</div>
-    </div>
+
+    <h3 style="font-size:14px; margin:20px 0 10px;">⚠️ 내 취약분야</h3>
+    <div id="my-weak-areas"></div>
+
+    <h3 style="font-size:14px; margin:20px 0 10px;">최근 응시 이력</h3>
+    <div id="my-edu-history"></div>
   </section>
 
   <section class="card">

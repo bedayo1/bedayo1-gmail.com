@@ -237,65 +237,6 @@
   margin-top: 8px;
 }
 
-.quiz-question-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: 14px;
-  margin-bottom: 14px;
-}
-
-.quiz-question-card .quiz-q-index {
-  font-size: 12px;
-  color: var(--color-primary);
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-
-.quiz-question-card .quiz-q-text {
-  font-weight: 600;
-  margin: 10px 0;
-}
-
-.detail-kv {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 14px;
-}
-
-.detail-kv:last-child {
-  border-bottom: none;
-}
-
-.detail-kv span:first-child {
-  color: var(--color-text-muted);
-}
-
-.detail-kv span:last-child {
-  font-weight: 600;
-  text-align: right;
-}
-
-.quiz-choice-readonly {
-  cursor: default;
-}
-
-.quiz-choice-readonly.correct {
-  border-color: var(--color-success);
-  background: rgba(50, 212, 120, 0.1);
-  color: var(--color-success);
-  font-weight: 600;
-}
-
-.quiz-choice-readonly.wrong {
-  border-color: var(--color-danger);
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-  font-weight: 600;
-}
-
 .quiz-manual-ref {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -321,12 +262,9 @@
   margin-bottom: 0;
 }
 
-.quiz-choices {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
+/* 출근 마법사(일일안전교육 문제풀이) 응답 선택 UI만 이 페이지 전용으로 남긴다.
+   문제 카드/보기 자체의 공통 스타일(.quiz-question-card, .quiz-choices 등)은 common.css 로 옮겨졌다
+   (마이페이지·관리자 모니터링에서도 결과 리뷰 화면에 재사용하기 때문). */
 .quiz-choice {
   display: flex;
   align-items: center;
@@ -345,16 +283,4 @@
 .quiz-choice.selected {
   border-color: var(--color-primary);
   background: rgba(0, 229, 255, 0.08);
-}
-
-.quiz-result {
-  text-align: center;
-  padding: 20px 0;
-}
-
-.quiz-result .quiz-score {
-  font-size: 40px;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin: 8px 0;
 }

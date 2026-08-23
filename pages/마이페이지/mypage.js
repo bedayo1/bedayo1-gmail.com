@@ -27,11 +27,28 @@ function renderProfile() {
   document.getElementById("profile-meta").textContent = `사번: ${profile.empId} · 소속: ${profile.dept}`;
 }
 
-function renderStats() {
-  document.getElementById("stat-accident").textContent = loadData("accidents", []).length;
-  document.getElementById("stat-malfunction").textContent = loadData("malfunctions", []).length;
-  document.getElementById("stat-emergency").textContent = loadData("emergencies", []).length;
-  document.getElementById("stat-post").textContent = loadData("posts", []).length;
+function renderEducationHistory() {
+  const records = getAttendancesFor(profile.empId);
+  const summary = summarizeEducation(records);
+
+  document.getElementById("edu-stat-count").textContent = summary.count;
+  document.getElementById("edu-stat-avg").textContent = `${summary.avgScore}점`;
+  document.getElementById("edu-stat-accuracy").textContent = `${summary.accuracy}%`;
+
+  document.getElementById("my-weak-areas").innerHTML = renderWeakAreasHtml(analyzeWeakAreas(records, 8));
+
+  const recent = records.slice(0, 5);
+  document.getElementById("my-edu-history").innerHTML = recent.length
+    ? recent
+        .map(
+          (r) => `
+      <div class="edu-history-day">
+        <div class="edu-history-day-title">${r.date} · ${r.education.score}점</div>
+        ${renderQuizReviewHtml(r.education.items)}
+      </div>`
+        )
+        .join("")
+    : `<div class="empty-state">아직 응시 이력이 없습니다. 홈 화면에서 출근을 완료하면 여기에 기록됩니다.</div>`;
 }
 
 function changePassword(oldPw, newPw1, newPw2) {
@@ -47,7 +64,7 @@ function changePassword(oldPw, newPw1, newPw2) {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("mypage");
   renderProfile();
-  renderStats();
+  renderEducationHistory();
 
   document.getElementById("pw-form").addEventListener("submit", (e) => {
     e.preventDefault();

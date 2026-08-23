@@ -636,25 +636,7 @@ function renderAttendanceDetailHtml(record) {
         .join("")
     : `<div class="empty-state">등록된 운전지시사항이 없었습니다.</div>`;
 
-  const quizHtml = edu.items
-    .map(
-      (q, qi) => `
-    <div class="quiz-question-card">
-      <div class="quiz-q-index">${q.type} · 문제 ${qi + 1} · ${q.title} · ${q.correct ? "✅ 정답" : "❌ 오답"}</div>
-      <div class="quiz-q-text">${q.question}</div>
-      <div class="quiz-choices">
-        ${(q.choices || [])
-          .map((c, ci) => {
-            let cls = "";
-            if (ci === q.correctIndex) cls = "correct";
-            else if (ci === q.selectedIndex) cls = "wrong";
-            return `<div class="quiz-choice quiz-choice-readonly ${cls}">${ci === q.selectedIndex ? "☑" : "☐"} ${c}</div>`;
-          })
-          .join("")}
-      </div>
-    </div>`
-    )
-    .join("");
+  const quizHtml = renderQuizReviewHtml(edu.items);
 
   return `
     <div class="wizard-section">

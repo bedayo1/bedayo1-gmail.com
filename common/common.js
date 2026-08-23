@@ -17,8 +17,8 @@ const NAV_ITEMS = [
   { key: "mypage", label: "마이페이지", path: "pages/마이페이지/mypage.html", icon: "👤", group: "main" },
   { key: "admin-employee", label: "직원 관리", path: "pages/관리자 - 직원관리/admin-employee.html", icon: "👥", group: "admin" },
   { key: "admin-notice", label: "공지·지시사항 관리", path: "pages/관리자- 공지'지시사항관리/admin-notice.html", icon: "📢", group: "admin" },
-  { key: "admin-quiz", label: "문제(적합성검사) 관리", path: "pages/관리자 - 문제관리/admin-quiz.html", icon: "🧠", group: "admin" },
   { key: "admin-schedule", label: "다이아·스케줄 관리", path: "pages/관리자 - 다이아(스케쥴) 관리/admin-schedule.html", icon: "📅", group: "admin" },
+  { key: "admin-education", label: "일일안전교육 모니터링", path: "pages/관리자 - 일일교육모니터링/admin-education.html", icon: "📈", group: "admin" },
 ];
 
 const NAV_GROUPS = [
@@ -186,14 +186,6 @@ const SEARCH_SOURCES = [
     getText: (x) => [x.title, x.type, x.content].join(" "),
   },
   {
-    key: "quizzes",
-    type: "문제",
-    icon: "🧠",
-    path: "pages/관리자 - 문제관리/admin-quiz.html",
-    getTitle: (x) => x.question,
-    getText: (x) => [x.category, x.question, x.answer].join(" "),
-  },
-  {
     key: "employees",
     type: "직원",
     icon: "👥",
@@ -306,6 +298,104 @@ function renderAttachmentList(attachments) {
     })
     .join("");
   return `<div class="attachment-list">${items}</div>`;
+}
+
+/* ---------- 일일안전교육 학습결과 (출근 시 응시한 퀴즈) — 마이페이지·관리자 모니터링 공용 ---------- */
+/* attendances 레코드 하나의 education.items 는
+   [{ type, title, question, choices, selectedIndex, correctIndex, correct }, ...] 형태다. */
+
+function getAllAttendances() {
+  return loadData("attendances", []);
+}
+
+function getAttendancesFor(empId) {
+  return getAllAttendances()
+    .filter((a) => a.empId === empId)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+}
+
+// 응시 횟수/평균점수/정답률 등 전체 요약
+function summarizeEducation(records) {
+  let totalQuestions = 0;
+  let totalCorrect = 0;
+  let scoreSum = 0;
+  records.forEach((r) => {
+    const items = (r.education && r.education.items) || [];
+    totalQuestions += items.length;
+    totalCorrect += items.filter((i) => i.correct).length;
+    scoreSum += (r.education && r.education.score) || 0;
+  });
+  return {
+    count: records.length,
+    totalQuestions,
+    totalCorrect,
+    accuracy: totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : 0,
+    avgScore: records.length ? Math.round(scoreSum / records.length) : 0,
+  };
+}
+
+// 오답이 있었던 매뉴얼(문제)을 오답률 순으로 정리 — "취약분야"
+function analyzeWeakAreas(records, limit) {
+  const stats = {};
+  records.forEach((r) => {
+    ((r.education && r.education.items) || []).forEach((item) => {
+      const key = `${item.type}::${item.title}`;
+      if (!stats[key]) stats[key] = { type: item.type, title: item.title, total: 0, wrong: 0 };
+      stats[key].total += 1;
+      if (!item.correct) stats[key].wrong += 1;
+    });
+  });
+  return Object.values(stats)
+    .filter((s) => s.wrong > 0)
+    .sort((a, b) => b.wrong / b.total - a.wrong / a.total || b.wrong - a.wrong)
+    .slice(0, limit || 8);
+}
+
+// 퀴즈 문항별 정답/오답 리뷰 화면 (마이페이지, 관리자 모니터링, 출근 상세보기가 공용으로 사용)
+function renderQuizReviewHtml(items) {
+  if (!items || items.length === 0) {
+    return `<div class="empty-state">응시한 문제가 없습니다.</div>`;
+  }
+  return items
+    .map((q, qi) => {
+      const choices = q.choices || [];
+      return `
+    <div class="quiz-question-card">
+      <div class="quiz-q-index">${q.type} · 문제 ${qi + 1} · ${q.title} · ${q.correct ? "✅ 정답" : "❌ 오답"}</div>
+      <div class="quiz-q-text">${q.question}</div>
+      <div class="quiz-choices">
+        ${choices
+          .map((c, ci) => {
+            let cls = "";
+            if (ci === q.correctIndex) cls = "correct";
+            else if (ci === q.selectedIndex) cls = "wrong";
+            return `<div class="quiz-choice quiz-choice-readonly ${cls}">${ci === q.selectedIndex ? "☑" : "☐"} ${c}</div>`;
+          })
+          .join("")}
+      </div>
+    </div>`;
+    })
+    .join("");
+}
+
+// 취약분야 목록 렌더링 (마이페이지 / 관리자 모니터링 공용)
+function renderWeakAreasHtml(weakAreas) {
+  if (!weakAreas || weakAreas.length === 0) {
+    return `<div class="empty-state">아직 오답이 없습니다. 좋은 결과예요!</div>`;
+  }
+  return `
+    <div class="weak-area-list">
+      ${weakAreas
+        .map(
+          (w) => `
+        <div class="weak-area-item">
+          <span class="badge ${w.type === "고장처치" ? "info" : "danger"}">${w.type}</span>
+          <span class="weak-area-title">${w.title}</span>
+          <span class="weak-area-rate">오답 ${w.wrong}/${w.total}</span>
+        </div>`
+        )
+        .join("")}
+    </div>`;
 }
 
 /* ---------- 목록 검색(제목/내용 선택) — 모든 목록형 페이지 공용 ---------- */

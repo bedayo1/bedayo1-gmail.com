@@ -1,0 +1,29 @@
+/* admin-education.html 전용 스타일 (일일안전교육 모니터링 페이지에서만 사용) */
+
+.edu-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.edu-detail-summary .mini-stat {
+  text-align: center;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.edu-detail-summary .mini-stat .mini-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: var(--font-mono), monospace;
+}
+
+.edu-detail-summary .mini-stat .mini-lbl {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
