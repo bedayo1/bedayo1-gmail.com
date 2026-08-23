@@ -182,6 +182,7 @@ body {
 }
 
 .header-icon-btn {
+  position: relative;
   width: 32px;
   height: 32px;
   display: flex;
@@ -192,6 +193,26 @@ body {
   border-radius: var(--radius);
   color: var(--color-text);
   font-size: 14px;
+  cursor: pointer;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+.notif-item {
   cursor: pointer;
 }
 
@@ -483,6 +504,21 @@ body {
   }
 
   .site-header .brand .sub {
+    display: none;
+  }
+
+  /* 좁은 화면에서는 아이콘 버튼들이 최우선 — 텍스트 라벨/날짜는 자리를 차지하지 않게 숨기고
+     아이콘 사이 여백도 줄여서 헤더가 옆으로 밀려 잘리지 않게 한다. */
+  .site-header {
+    padding: 0 10px;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+
+  .header-user-label,
+  .site-header .header-date {
     display: none;
   }
 
@@ -988,6 +1024,14 @@ body {
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   font-size: 13px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.weak-area-item:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
 }
 
 .weak-area-title {

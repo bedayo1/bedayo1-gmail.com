@@ -402,21 +402,26 @@ function renderQuizReviewHtml(items) {
 }
 
 // 취약분야 목록 렌더링 (마이페이지 / 관리자 모니터링 공용)
+// 항목을 클릭하면 해당 매뉴얼(고장처치/이례상황) 상세로 바로 이동해 복습할 수 있다.
 function renderWeakAreasHtml(weakAreas) {
   if (!weakAreas || weakAreas.length === 0) {
     return `<div class="empty-state">아직 오답이 없습니다. 좋은 결과예요!</div>`;
   }
+  const base = getRootBase();
   return `
     <div class="weak-area-list">
       ${weakAreas
-        .map(
-          (w) => `
-        <div class="weak-area-item">
+        .map((w) => {
+          const manualPath =
+            w.type === "고장처치" ? "pages/고장조치메뉴얼/malfunction.html" : "pages/이례상황메뉴얼/emergency.html";
+          const href = `${base}${manualPath}?title=${encodeURIComponent(w.title)}`;
+          return `
+        <a class="weak-area-item" href="${href}" title="매뉴얼 바로가기">
           <span class="badge ${w.type === "고장처치" ? "info" : "danger"}">${w.type}</span>
           <span class="weak-area-title">${w.title}</span>
           <span class="weak-area-rate">오답 ${w.wrong}/${w.total}</span>
-        </div>`
-        )
+        </a>`;
+        })
         .join("")}
     </div>`;
 }
@@ -679,6 +684,123 @@ function renderSearchResultRow(base, r) {
     </a>`;
 }
 
+/* ---------- 통합 알림함 (헤더 🔔) ---------- */
+/* 공지/지시사항 열람여부, 내 글의 새 댓글은 직원별로 읽음 상태를 localStorage에 남겨서 다음 방문에도 유지한다.
+   재교육 필요/오늘 미출근 같은 항목은 조건이 사실인 동안 항상 떠 있는 "실시간 상태"라 별도 읽음 처리를 하지 않는다. */
+
+function getNotifState(userKey) {
+  const all = loadData("notifState", {});
+  return all[userKey] || { readNoticeIds: [], commentSeenCounts: {} };
+}
+
+function saveNotifState(userKey, state) {
+  const all = loadData("notifState", {});
+  all[userKey] = state;
+  saveData("notifState", all);
+}
+
+function buildNotifications() {
+  const session = loadData("session", null);
+  if (!session) return [];
+  const base = getRootBase();
+  const notifs = [];
+
+  if (session.type === "admin") {
+    const employees = loadData("employees", []);
+    const today = formatDate(new Date());
+    const todays = getAllAttendances().filter((a) => a.date === today);
+
+    todays
+      .filter((a) => a.excluded)
+      .forEach((a) => {
+        notifs.push({
+          id: `exclude-${a.id}`,
+          icon: "🚫",
+          text: `${a.name}님이 오늘 직무배제 보고를 했습니다.`,
+          href: `${base}pages/관리자 - 출근현황/admin-attendance.html`,
+        });
+      });
+
+    const noShow = employees.length - todays.length;
+    if (noShow > 0) {
+      notifs.push({
+        id: "no-attendance-today",
+        icon: "🕐",
+        text: `오늘 아직 출근 확인이 안 된 직원이 ${noShow}명 있습니다.`,
+        href: `${base}pages/관리자 - 출근현황/admin-attendance.html`,
+      });
+    }
+
+    const retrainCount = employees.filter((emp) => needsRetraining(summarizeEducation(getAttendancesFor(emp.empId)))).length;
+    if (retrainCount > 0) {
+      notifs.push({
+        id: "retraining-admin",
+        icon: "🔴",
+        text: `재교육이 필요한 직원이 ${retrainCount}명 있습니다.`,
+        href: `${base}pages/관리자 - 일일교육모니터링/admin-education.html`,
+      });
+    }
+    return notifs;
+  }
+
+  const profile = loadData("profile", null);
+  if (!profile) return [];
+  const state = getNotifState(profile.empId);
+
+  loadData("adminNotices", [])
+    .filter((n) => isWithinNoticePeriod(n) && !state.readNoticeIds.includes(n.id))
+    .forEach((n) => {
+      notifs.push({
+        id: `notice-${n.id}`,
+        icon: n.type === "지시사항" ? "📢" : "📋",
+        text: `[${n.type}] ${n.title}`,
+        kind: "notice",
+        noticeId: n.id,
+      });
+    });
+
+  if (needsRetraining(summarizeEducation(getAttendancesFor(profile.empId)))) {
+    notifs.push({
+      id: "retraining-self",
+      icon: "🔴",
+      text: `최근 정답률이 ${RETRAINING_ACCURACY_THRESHOLD}% 미만입니다. 재교육이 필요할 수 있어요.`,
+      href: `${base}pages/마이페이지/mypage.html`,
+    });
+  }
+
+  loadData("posts", [])
+    .filter((p) => p.author === profile.name)
+    .forEach((p) => {
+      const count = (p.comments || []).length;
+      const seen = state.commentSeenCounts[p.id] || 0;
+      if (count > seen) {
+        notifs.push({
+          id: `comment-${p.id}`,
+          icon: "💬",
+          text: `"${p.title}"에 새 댓글이 ${count - seen}개 달렸습니다.`,
+          href: `${base}pages/자유게시판/board.html`,
+          kind: "comment",
+          postId: p.id,
+          count,
+        });
+      }
+    });
+
+  return notifs;
+}
+
+function markNotificationRead(notif) {
+  const profile = loadData("profile", null);
+  if (!profile) return;
+  const state = getNotifState(profile.empId);
+  if (notif.kind === "notice") {
+    if (!state.readNoticeIds.includes(notif.noticeId)) state.readNoticeIds.push(notif.noticeId);
+  } else if (notif.kind === "comment") {
+    state.commentSeenCounts[notif.postId] = notif.count;
+  }
+  saveNotifState(profile.empId, state);
+}
+
 function renderHeader() {
   const mount = document.getElementById("site-header");
   if (!mount) return;
@@ -720,6 +842,12 @@ function renderHeader() {
             <a class="widget-more-link" href="${base}pages/AI챗봇/chatbot.html">AI챗봇 전체화면 열기 →</a>
           </div>
         </div>
+        <div class="header-widget" id="notif-widget">
+          <button class="header-icon-btn" id="notif-widget-btn" type="button" title="알림">🔔<span class="notif-badge" id="notif-badge" hidden>0</span></button>
+          <div class="widget-popup" id="notif-widget-popup">
+            <div class="header-search-results" id="notif-widget-results"></div>
+          </div>
+        </div>
         <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="라이트/다크 모드 전환">🌙</button>
         <div class="header-date">${formatDate(new Date())}</div>
       </div>
@@ -732,6 +860,7 @@ function renderHeader() {
   });
   updateThemeToggleIcon();
   wireHeaderWidgets(base);
+  wireNotifWidget(base);
 }
 
 /* ---------- 사이드바 열기/닫기 (앱/모바일 화면의 슬라이드 메뉴) ---------- */
@@ -766,8 +895,7 @@ function wireHeaderWidgets(base) {
   const chatbotResults = document.getElementById("chatbot-widget-results");
 
   function closeAllWidgets() {
-    searchWidget.classList.remove("open");
-    chatbotWidget.classList.remove("open");
+    document.querySelectorAll(".header-widget.open").forEach((w) => w.classList.remove("open"));
   }
 
   searchBtn.addEventListener("click", (e) => {
@@ -813,6 +941,60 @@ function wireHeaderWidgets(base) {
       ? `<div class="header-search-empty">"${q}"과(와) 비슷한 자료를 찾았어요:</div>` +
         results.map((r) => renderSearchResultRow(base, r)).join("")
       : `<div class="header-search-empty">"${q}"과(와) 관련된 자료를 찾지 못했어요. 다른 표현으로 다시 시도해보세요.</div>`;
+  });
+}
+
+function renderNotifList() {
+  const notifs = buildNotifications();
+  const badge = document.getElementById("notif-badge");
+  badge.textContent = notifs.length;
+  badge.hidden = notifs.length === 0;
+
+  const results = document.getElementById("notif-widget-results");
+  results.innerHTML = notifs.length
+    ? notifs
+        .map(
+          (n) => `
+      <a class="header-search-result notif-item" data-notif-id="${n.id}" ${n.href ? `href="${n.href}"` : ""}>
+        <span>${n.icon}</span>
+        <span class="header-search-result-body">
+          <span class="header-search-result-title">${n.text}</span>
+        </span>
+      </a>`
+        )
+        .join("")
+    : `<div class="header-search-empty">새 알림이 없습니다.</div>`;
+
+  results.querySelectorAll(".notif-item").forEach((el) => {
+    el.addEventListener("click", () => {
+      const notif = notifs.find((n) => n.id === el.dataset.notifId);
+      if (notif && notif.kind) {
+        markNotificationRead(notif);
+        renderNotifList();
+      }
+    });
+  });
+}
+
+function wireNotifWidget() {
+  const btn = document.getElementById("notif-widget-btn");
+  const widget = document.getElementById("notif-widget");
+  if (!btn || !widget) return;
+
+  renderNotifList();
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = !widget.classList.contains("open");
+    document.querySelectorAll(".header-widget.open").forEach((w) => w.classList.remove("open"));
+    if (willOpen) {
+      widget.classList.add("open");
+      renderNotifList();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!widget.contains(e.target)) widget.classList.remove("open");
   });
 }
 

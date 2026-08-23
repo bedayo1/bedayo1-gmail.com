@@ -289,6 +289,13 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMalfunctionList();
   onViewportChange(renderMalfunctionList);
 
+  // 마이페이지 취약분야 목록 등에서 ?title= 로 넘어온 경우 해당 매뉴얼 상세를 바로 연다.
+  const titleParam = new URLSearchParams(location.search).get("title");
+  if (titleParam) {
+    const target = malfunctions.find((m) => m.title === titleParam);
+    if (target) openDetail(target.id);
+  }
+
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-backdrop").addEventListener("click", (e) => {
