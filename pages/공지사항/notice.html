@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 공지사항</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./notice.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">공지사항</h1>
+  <p class="page-desc">관리자가 등록한 공지사항·지시사항을 확인합니다.</p>
+
+  <section class="card">
+    <div class="list-search" id="notice-search"></div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>구분</th>
+          <th>제목</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="notice-tbody"></tbody>
+    </table>
+    <div class="pagination-bar" id="notice-pager"></div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 상세보기 -->
+<div class="modal-backdrop" id="detail-backdrop">
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="detail-title">-</h2>
+      <button type="button" class="wizard-close" id="btn-detail-close">×</button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-section">
+        <div class="post-detail-meta" id="detail-meta"></div>
+        <div class="views-likes-bar" id="views-likes-mount"></div>
+        <p class="post-detail-content" id="detail-content" style="white-space: pre-wrap;"></p>
+      </div>
+    </div>
+    <div class="modal-actions wizard-actions">
+      <button type="button" class="btn secondary" id="btn-detail-close2">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script src="../../common/data-malfunctions.js"></script>
+<script src="../../common/data-emergencies.js"></script>
+<script src="../../common/data-accidents.js"></script>
+<script src="../../common/common.js"></script>
+<script src="./notice.js"></script>
+</body>
+</html>

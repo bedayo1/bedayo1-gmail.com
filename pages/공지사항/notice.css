@@ -1,0 +1,10 @@
+/* notice.html 전용 스타일 (공지사항 페이지에서만 사용) */
+
+#notice-tbody td.title-cell a {
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+#notice-tbody td.title-cell a:hover {
+  text-decoration: underline;
+}
