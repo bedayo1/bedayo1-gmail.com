@@ -8,6 +8,24 @@ let accidents = loadData(
 );
 saveData("accidents", accidents);
 
+// 사고사례 번호별 원본 한글(hwp/hwpx) 파일 — "전체 다운로드"에서 zip으로 묶어 내려받는다.
+const ACCIDENT_HWP_FILES = {
+  "2026-1": "./data/운전정보 2026-1.hwpx",
+  "2026-2": "./data/운전정보 2026-2.hwpx",
+  "2026-3": "./data/운전정보 2026-3.hwpx",
+  "2026-4": "./data/운전정보 2026-4.hwpx",
+  "2026-5": "./data/운전정보 2026-5.hwpx",
+  "2026-6": "./data/운전정보 2026-6.hwpx",
+  "2026-7": "./data/운전정보 2026-7.hwpx",
+  "2026-8": "./data/운전정보 2026-8.hwpx",
+  "2026-9": "./data/운전정보 2026-9.hwpx",
+  "2026-10": "./data/운전정보 2026-10.hwpx",
+  "2026-11": "./data/운전정보 2026-11.hwpx",
+  "2026-12": "./data/운전정보 2026-12.hwp",
+  "2026-13": "./data/운전정보 2026-13.hwp",
+  "2026-14": "./data/운전정보 2026-14.hwp",
+};
+
 /* ---------- CRUD ---------- */
 
 function getAllAccidents() {
@@ -120,13 +138,9 @@ function renderAccidentLikesBar(item) {
   });
 }
 
-function openDetail(id) {
-  const item = getAccident(id);
-  if (!item) return;
+let currentDetailId = null;
 
-  recordView(item);
-  saveData("accidents", accidents);
-
+function renderAccidentBodyHtml(item, includeLikesBar) {
   const photos = item.photos || [];
   const gallery = photos
     .map(
@@ -142,13 +156,13 @@ function openDetail(id) {
     ? `<div class="bulletin-diagram"><img src="${item.diagram}" alt="상황도"></div>`
     : "";
 
-  document.getElementById("detail-body").innerHTML = `
+  return `
     <div class="bulletin-header">
       <span class="bulletin-tag">운전정보</span>
       <h2>${item.title}</h2>
       <span class="bulletin-no">${item.no || ""}</span>
     </div>
-    <div class="views-likes-bar" id="views-likes-mount"></div>
+    ${includeLikesBar ? `<div class="views-likes-bar" id="views-likes-mount"></div>` : ""}
     <div class="bulletin-body">
       <div class="bulletin-main">
         ${renderBulletinSection("장애(발생)개요", item.overview)}
@@ -179,6 +193,17 @@ function openDetail(id) {
       </div>
     </div>
   `;
+}
+
+function openDetail(id) {
+  const item = getAccident(id);
+  if (!item) return;
+  currentDetailId = id;
+
+  recordView(item);
+  saveData("accidents", accidents);
+
+  document.getElementById("detail-body").innerHTML = renderAccidentBodyHtml(item, true);
   renderAccidentLikesBar(item);
   document.getElementById("detail-backdrop").classList.add("open");
 }
@@ -283,6 +308,21 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
   document.getElementById("detail-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "detail-backdrop") closeDetail();
+  });
+
+  document.getElementById("btn-download-all").addEventListener("click", async () => {
+    const files = Object.entries(ACCIDENT_HWP_FILES).map(([, url]) => ({ name: url.split("/").pop(), url }));
+    const btn = document.getElementById("btn-download-all");
+    btn.disabled = true;
+    btn.textContent = "묶는 중...";
+    try {
+      await downloadFilesAsZip("사고사례_전체(원본모음).zip", files);
+    } catch (err) {
+      showToast("다운로드 중 오류가 발생했습니다.");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "⬇ 전체 다운로드";
+    }
   });
 
   const photoEditor = document.getElementById("photo-editor");

@@ -12,6 +12,11 @@
 
 const DUTY_ORDER = ["평일", "휴일", "평평", "휴평", "평휴", "휴휴"];
 
+// 사업소별 원본 엑셀(행로표) 파일 경로 — 사업소가 늘어나면 여기에 한 줄씩 추가하면 된다.
+const DIA_XLSX_FILES = {
+  신답승무사업소: "./data/1호선 행로표(26.02.28.).xlsx",
+};
+
 let currentDepot = null;
 let currentDuty = null;
 let currentPage = 0;
@@ -30,6 +35,18 @@ function getPagesFor(depot, duty) {
   if (!data) return [];
   const pages = data[duty];
   return Array.isArray(pages) ? pages : pages ? [pages] : [];
+}
+
+function renderXlsxDownloadLink() {
+  const link = document.getElementById("btn-download-xlsx");
+  const file = currentDepot ? DIA_XLSX_FILES[currentDepot] : null;
+  if (!file) {
+    link.style.display = "none";
+    return;
+  }
+  link.href = file;
+  link.download = file.split("/").pop();
+  link.style.display = "";
 }
 
 function renderDepotTabs() {
@@ -52,6 +69,7 @@ function renderDepotTabs() {
       currentDuty = duties[0] || null;
       currentPage = 0;
       renderDepotTabs();
+      renderXlsxDownloadLink();
       renderDutyTabs();
       renderPager();
       renderTable();
@@ -141,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
   currentPage = 0;
 
   renderDepotTabs();
+  renderXlsxDownloadLink();
   renderDutyTabs();
   renderPager();
   renderTable();

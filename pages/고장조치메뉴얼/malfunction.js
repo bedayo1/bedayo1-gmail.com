@@ -11,6 +11,13 @@ const VEHICLE_TYPES = [
 
 let currentVehicleFilter = "all";
 
+// 차종별 원본 한글(hwp) 파일 — "전체 다운로드" 클릭 시 그대로 내려받는다.
+const VEHICLE_HWP_FILES = {
+  VVVF: "./data/1호선 ADV(VVVF)전동차 고장조치 매뉴얼 완성본 -5.28.hwp",
+  저항차: "./data/1호선_AD저항차_고장조치_메뉴얼_완성본_6.23.hwp",
+  ATO: "./data/2호선ATO 응급교범1-9.hwp",
+};
+
 let malfunctions = loadData(
   "malfunctions",
   MALFUNCTION_SEED.map((m) => ({ id: uid(), ...m }))
@@ -186,16 +193,10 @@ function renderMalfunctionLikesBar(item) {
   });
 }
 
-function openDetail(id) {
-  const item = getMalfunction(id);
-  if (!item) return;
+let currentDetailId = null;
 
-  recordView(item);
-  saveData("malfunctions", malfunctions);
-
-  document.getElementById("detail-title").textContent = item.title;
-  document.getElementById("detail-body").innerHTML = `
-    <div class="views-likes-bar" id="views-likes-mount"></div>
+function renderMalfunctionBodyHtml(item) {
+  return `
     <div class="detail-section">
       <h4>차종</h4>
       <span class="badge info">${item.vehicleType}</span>
@@ -208,6 +209,21 @@ function openDetail(id) {
     ${renderDetailSection("※ 주의사항", item.notes)}
     ${renderDetailPhoto(item)}
     ${renderDetailVideos(item)}
+  `;
+}
+
+function openDetail(id) {
+  const item = getMalfunction(id);
+  if (!item) return;
+  currentDetailId = id;
+
+  recordView(item);
+  saveData("malfunctions", malfunctions);
+
+  document.getElementById("detail-title").textContent = item.title;
+  document.getElementById("detail-body").innerHTML = `
+    <div class="views-likes-bar" id="views-likes-mount"></div>
+    ${renderMalfunctionBodyHtml(item)}
   `;
   renderMalfunctionLikesBar(item);
   document.getElementById("detail-backdrop").classList.add("open");
@@ -273,6 +289,31 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
   document.getElementById("detail-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "detail-backdrop") closeDetail();
+  });
+
+  document.getElementById("btn-download-all").addEventListener("click", async () => {
+    const btn = document.getElementById("btn-download-all");
+    if (currentVehicleFilter === "all") {
+      const files = Object.entries(VEHICLE_HWP_FILES).map(([, url]) => ({ name: url.split("/").pop(), url }));
+      btn.disabled = true;
+      btn.textContent = "묶는 중...";
+      try {
+        await downloadFilesAsZip("고장처치매뉴얼_전체(hwp모음).zip", files);
+      } catch (err) {
+        showToast("다운로드 중 오류가 발생했습니다.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "⬇ 전체 다운로드";
+      }
+      return;
+    }
+
+    const url = VEHICLE_HWP_FILES[currentVehicleFilter];
+    if (!url) {
+      showToast("이 차종의 원본 파일이 없습니다.");
+      return;
+    }
+    downloadOriginalFile(url);
   });
 
   wirePhotoEditor(

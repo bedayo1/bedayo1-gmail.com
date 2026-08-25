@@ -211,6 +211,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
   document.getElementById("btn-detail-close2").addEventListener("click", closeDetail);
+
+  document.getElementById("btn-download-all").addEventListener("click", () => {
+    if (posts.length === 0) {
+      showToast("다운로드할 게시글이 없습니다.");
+      return;
+    }
+    const sorted = [...posts].reverse();
+    const bodyHtml = sorted
+      .map((p) => {
+        const comments = (p.comments || [])
+          .map((c) => `<div style="margin:4px 0 4px 16px; font-size:13px; color:#555;">└ ${c.author}: ${c.content}</div>`)
+          .join("");
+        return `
+        <h2>${p.title}</h2>
+        <div class="meta">${p.author} · ${p.date}</div>
+        <div>${(p.content || "").replace(/\n/g, "<br>")}</div>
+        ${comments}
+        <hr>`;
+      })
+      .join("");
+    downloadAsHtml("자유게시판_전체", "자유게시판 (전체)", bodyHtml);
+  });
+
   document.getElementById("detail-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });

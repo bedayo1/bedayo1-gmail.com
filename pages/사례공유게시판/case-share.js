@@ -235,6 +235,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
   document.getElementById("btn-detail-close2").addEventListener("click", closeDetail);
+
+  document.getElementById("btn-download-all").addEventListener("click", () => {
+    if (casePosts.length === 0) {
+      showToast("다운로드할 사례가 없습니다.");
+      return;
+    }
+    const sorted = [...casePosts].reverse();
+    const bodyHtml = sorted
+      .map((p) => {
+        const comments = (p.comments || [])
+          .map((c) => `<div style="margin:4px 0 4px 16px; font-size:13px; color:#555;">└ ${c.author}: ${c.bodyHtml || ""}</div>`)
+          .join("");
+        return `
+        <h2>${p.title}</h2>
+        <div class="meta">${p.author} · ${p.date}</div>
+        ${p.bodyHtml || ""}
+        ${comments}
+        <hr>`;
+      })
+      .join("");
+    downloadAsHtml("사례공유게시판_전체", "사례공유게시판 (전체)", bodyHtml);
+  });
+
   document.getElementById("detail-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });

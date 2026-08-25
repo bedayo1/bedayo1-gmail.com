@@ -143,6 +143,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });
 
+  document.getElementById("btn-download").addEventListener("click", () => {
+    const item = getNotice(currentDetailId);
+    if (!item) return;
+    const bodyHtml =
+      `<div class="meta">${item.type}</div>` +
+      (item.content ? `<div>${item.content}</div>` : "") +
+      renderPhotoGalleryHtml(item.photos);
+    downloadAsHtml(toSafeFilename(item.title), item.title, bodyHtml);
+  });
+
   document.getElementById("btn-ack").addEventListener("click", () => {
     const item = getNotice(currentDetailId);
     if (!item) return;

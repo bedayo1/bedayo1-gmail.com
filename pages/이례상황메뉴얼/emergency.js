@@ -131,6 +131,16 @@ function openModal(id) {
   backdrop.classList.add("open");
 }
 
+function renderEmergencyBodyHtml(item) {
+  return `
+    <h4>상황 유형</h4><p>${item.category}</p>
+    <h4>발생/적용 조건</h4><p>${item.condition || ""}</p>
+    <h4>대응 절차</h4><p>${(item.procedureSteps || []).map((s, i) => `${i + 1}. ${s}`).join("<br>")}</p>
+    ${item.caution ? `<h4>주의사항</h4><p>${item.caution}</p>` : ""}
+    ${item.reference ? `<h4>관련 근거(규정)</h4><p>${item.reference}</p>` : ""}
+  `;
+}
+
 function closeModal() {
   document.getElementById("modal-backdrop").classList.remove("open");
   renderEmergencyList(); // 조회수/좋아요가 목록 뱃지에도 바로 반영되게 갱신
@@ -154,6 +164,15 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "modal-backdrop") closeModal();
+  });
+
+  document.getElementById("btn-download-all").addEventListener("click", () => {
+    if (emergencies.length === 0) {
+      showToast("다운로드할 매뉴얼이 없습니다.");
+      return;
+    }
+    const bodyHtml = emergencies.map((e) => `<h2>${e.title}</h2>${renderEmergencyBodyHtml(e)}<hr>`).join("");
+    downloadAsHtml("이례상황매뉴얼_전체", "이례상황 매뉴얼 (전체)", bodyHtml);
   });
 
   document.getElementById("emergency-form").addEventListener("submit", (e) => {

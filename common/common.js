@@ -315,6 +315,168 @@ function getUnackedNoticesFor(empId) {
   );
 }
 
+/* ---------- 파일로 다운로드 (매뉴얼/공지사항/게시판 공용) ---------- */
+/* 상세보기에 나온 내용을 그대로 담은 독립 HTML 파일 하나로 내려받는다.
+   사진(base64)까지 그대로 파일 안에 포함되어, 다운로드한 파일만 열어도 원문 그대로 보인다. */
+
+function downloadAsHtml(filename, title, bodyHtml) {
+  const safeTitle = (title || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${safeTitle}</title>
+<style>
+  body { font-family: "Malgun Gothic", "맑은 고딕", sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #222; }
+  h1 { font-size: 22px; border-bottom: 2px solid #222; padding-bottom: 10px; }
+  h4 { font-size: 14px; color: #555; margin: 18px 0 4px; }
+  img { max-width: 100%; border-radius: 6px; border: 1px solid #ddd; margin: 8px 0; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 16px; }
+  .caption { font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  ${bodyHtml}
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".html") ? filename : `${filename}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 파일명으로 쓸 수 없는 문자(\/:*?"<>|)를 제거한다.
+function toSafeFilename(text) {
+  return (text || "제목없음").replace(/[\\/:*?"<>|]/g, "").trim().slice(0, 80);
+}
+
+/* ---------- 여러 원본 파일을 zip 하나로 묶어 다운로드 (외부 라이브러리 없이 직접 구현) ---------- */
+/* hwp/hwpx 원본처럼 "이미 압축된" 파일이 대부분이라 압축(Deflate) 없이 저장(Store) 방식으로만 담는다.
+   ZIP 포맷 자체는 표준이라 압축을 안 해도 탐색기/알집 등에서 정상적으로 열린다. */
+
+const CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  for (let i = 0; i < bytes.length; i++) {
+    crc = CRC32_TABLE[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function writeUint32LE(view, offset, value) {
+  view.setUint32(offset, value, true);
+}
+function writeUint16LE(view, offset, value) {
+  view.setUint16(offset, value, true);
+}
+
+// files: [{ name, url }]. 하나라도 못 받아오면 에러를 던진다(호출부에서 안내 메시지 처리).
+async function downloadFilesAsZip(zipFilename, files) {
+  const encoder = new TextEncoder();
+  const entries = [];
+
+  for (const f of files) {
+    const res = await fetch(f.url);
+    if (!res.ok) throw new Error(`파일을 불러오지 못했습니다: ${f.name}`);
+    const buf = new Uint8Array(await res.arrayBuffer());
+    entries.push({ name: f.name, nameBytes: encoder.encode(f.name), data: buf, crc: crc32(buf) });
+  }
+
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  entries.forEach((e) => {
+    const localHeader = new ArrayBuffer(30);
+    const lv = new DataView(localHeader);
+    writeUint32LE(lv, 0, 0x04034b50);
+    writeUint16LE(lv, 4, 20);
+    writeUint16LE(lv, 6, 0x0800); // UTF-8 파일명 플래그
+    writeUint16LE(lv, 8, 0); // 저장(무압축)
+    writeUint16LE(lv, 10, 0);
+    writeUint16LE(lv, 12, 0);
+    writeUint32LE(lv, 14, e.crc);
+    writeUint32LE(lv, 18, e.data.length);
+    writeUint32LE(lv, 22, e.data.length);
+    writeUint16LE(lv, 26, e.nameBytes.length);
+    writeUint16LE(lv, 28, 0);
+    localParts.push(new Uint8Array(localHeader), e.nameBytes, e.data);
+
+    const centralHeader = new ArrayBuffer(46);
+    const cv = new DataView(centralHeader);
+    writeUint32LE(cv, 0, 0x02014b50);
+    writeUint16LE(cv, 4, 20);
+    writeUint16LE(cv, 6, 20);
+    writeUint16LE(cv, 8, 0x0800);
+    writeUint16LE(cv, 10, 0);
+    writeUint16LE(cv, 12, 0);
+    writeUint16LE(cv, 14, 0);
+    writeUint32LE(cv, 16, e.crc);
+    writeUint32LE(cv, 20, e.data.length);
+    writeUint32LE(cv, 24, e.data.length);
+    writeUint16LE(cv, 28, e.nameBytes.length);
+    writeUint16LE(cv, 30, 0);
+    writeUint16LE(cv, 32, 0);
+    writeUint16LE(cv, 34, 0);
+    writeUint16LE(cv, 36, 0);
+    writeUint32LE(cv, 38, 0);
+    writeUint32LE(cv, 42, offset);
+    centralParts.push(new Uint8Array(centralHeader), e.nameBytes);
+
+    offset += localHeader.byteLength + e.nameBytes.length + e.data.length;
+  });
+
+  const centralStart = offset;
+  const centralSize = centralParts.reduce((sum, p) => sum + p.length, 0);
+
+  const endRecord = new ArrayBuffer(22);
+  const ev = new DataView(endRecord);
+  writeUint32LE(ev, 0, 0x06054b50);
+  writeUint16LE(ev, 4, 0);
+  writeUint16LE(ev, 6, 0);
+  writeUint16LE(ev, 8, entries.length);
+  writeUint16LE(ev, 10, entries.length);
+  writeUint32LE(ev, 12, centralSize);
+  writeUint32LE(ev, 16, centralStart);
+  writeUint16LE(ev, 20, 0);
+
+  const blob = new Blob([...localParts, ...centralParts, new Uint8Array(endRecord)], { type: "application/zip" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = zipFilename.endsWith(".zip") ? zipFilename : `${zipFilename}.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 원본 파일 하나를 있는 그대로(서버 파일을 재가공하지 않고) 다운로드한다.
+function downloadOriginalFile(url, filename) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename || url.split("/").pop();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 /* ---------- 테마 (라이트/다크 전환) ---------- */
 
 function applyTheme() {
