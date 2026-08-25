@@ -91,6 +91,25 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+/* ---------- 핵심 데이터 시드 보장 ---------- */
+/* 고장처치/이례상황/사고사례 매뉴얼은 원래 각자의 관리 페이지(malfunction.js/emergency.js/accident.js)를
+   처음 열 때만 localStorage에 채워졌다. 그런데 홈 출근 마법사·통합검색·AI챗봇은 그 페이지를 거치지 않고
+   바로 데이터를 읽기 때문에, 아무도 그 관리 페이지를 연 적이 없으면 일일안전교육 문제가 0개로 뜨는 등의
+   문제가 있었다. 시드 데이터 자체는 common.js보다 먼저 로드되는 data-*.js 공용 파일에 있고,
+   여기서는 어떤 페이지로 처음 들어오든 한 번만 채워지도록 보장만 한다. */
+function seedCoreData() {
+  if (typeof MALFUNCTION_SEED !== "undefined" && loadData("malfunctions", []).length === 0) {
+    saveData("malfunctions", MALFUNCTION_SEED.map((m) => ({ id: uid(), ...m })));
+  }
+  if (typeof EMERGENCY_SEED !== "undefined" && loadData("emergencies", []).length === 0) {
+    saveData("emergencies", EMERGENCY_SEED.map((e) => ({ id: uid(), ...e })));
+  }
+  if (typeof ACCIDENT_SEED !== "undefined" && loadData("accidents", []).length === 0) {
+    saveData("accidents", ACCIDENT_SEED.map((a) => ({ id: uid(), ...a })));
+  }
+}
+seedCoreData();
+
 // 사진 에디터가 만든 리치 HTML(bodyHtml)에서 태그를 걷어내 검색 인덱스용 순수 텍스트만 뽑는다.
 function stripHtml(html) {
   const div = document.createElement("div");

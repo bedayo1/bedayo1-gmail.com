@@ -1,34 +1,11 @@
 /* emergency.html 전용 데이터 & 로직 */
 
-let emergencies = loadData("emergencies", [
-  {
-    id: uid(),
-    title: "터널 내 정차 시 승객 대피",
-    category: "화재",
-    condition: "터널 구간에서 화재로 인해 열차가 정차하고 자력 운행이 불가능한 경우",
-    procedureSteps: [
-      "즉시 비상제동 체결 및 관제 보고",
-      "승객 안내방송으로 상황 공지",
-      "가장 가까운 비상구 방향으로 승객 유도",
-      "대피 완료 후 관제에 최종 인원 보고",
-    ],
-    caution: "관제 지시 없이 임의로 열차를 재기동하지 않는다. 연기 방향을 확인해 반대 방향으로 대피시킨다.",
-    reference: "철도안전법 시행규칙 제.., 사내 비상대응지침 3장",
-  },
-  {
-    id: uid(),
-    title: "선로 내 장애물 발견",
-    category: "기타",
-    condition: "운행 중 전방 선로 위에서 사람, 차량, 낙하물 등 장애물을 육안으로 확인한 경우",
-    procedureSteps: [
-      "즉시 비상제동 체결",
-      "관제에 위치와 상황 보고",
-      "서행 통과 절대 금지, 관제 지시 대기",
-    ],
-    caution: "장애물 제거를 위해 임의로 선로에 진입하지 않는다.",
-    reference: "사내 비상대응지침 5장",
-  },
-]);
+// EMERGENCY_SEED는 common/data-emergencies.js(공용 시드 데이터 파일, html에서 common.js보다 먼저 로드됨)에 정의되어 있다.
+
+let emergencies = loadData(
+  "emergencies",
+  EMERGENCY_SEED.map((e) => ({ id: uid(), ...e }))
+);
 saveData("emergencies", emergencies);
 
 /* ---------- CRUD ---------- */

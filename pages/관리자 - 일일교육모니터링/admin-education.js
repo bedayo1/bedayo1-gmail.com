@@ -40,6 +40,47 @@ function renderStats(summaries) {
   document.getElementById("stat-retraining").textContent = `${retrainingCount}명`;
 }
 
+// 좋아요 수 기준 매뉴얼 Top5 — 어떤 매뉴얼이 실제로 직원들에게 도움이 됐는지 파악하기 위함.
+function renderPopularManuals() {
+  const mount = document.getElementById("popular-manuals");
+  const base = getRootBase();
+
+  const malfunctionItems = loadData("malfunctions", []).map((m) => ({
+    type: "고장처치",
+    title: m.title,
+    likes: (m.likedBy || []).length,
+    views: m.views || 0,
+    href: `${base}pages/고장조치메뉴얼/malfunction.html?title=${encodeURIComponent(m.title)}`,
+  }));
+  const emergencyItems = loadData("emergencies", []).map((e) => ({
+    type: "이례상황",
+    title: e.title,
+    likes: (e.likedBy || []).length,
+    views: e.views || 0,
+    href: `${base}pages/이례상황메뉴얼/emergency.html?title=${encodeURIComponent(e.title)}`,
+  }));
+
+  const top5 = [...malfunctionItems, ...emergencyItems]
+    .filter((x) => x.likes > 0)
+    .sort((a, b) => b.likes - a.likes || b.views - a.views)
+    .slice(0, 5);
+
+  mount.innerHTML = top5.length
+    ? `<div class="weak-area-list">
+        ${top5
+          .map(
+            (x) => `
+          <a class="weak-area-item" href="${x.href}">
+            <span class="badge ${x.type === "고장처치" ? "info" : "danger"}">${x.type}</span>
+            <span class="weak-area-title">${x.title}</span>
+            <span class="weak-area-rate">❤️ ${x.likes} · 👁 ${x.views}</span>
+          </a>`
+          )
+          .join("")}
+      </div>`
+    : `<div class="empty-state">아직 좋아요를 받은 매뉴얼이 없습니다.</div>`;
+}
+
 function renderList() {
   const tbody = document.getElementById("edu-tbody");
   const all = buildEmployeeEducationSummaries();
@@ -141,6 +182,7 @@ function closeDetail() {
 document.addEventListener("DOMContentLoaded", () => {
   renderLayout("admin-education");
   renderList();
+  renderPopularManuals();
   onViewportChange(renderList);
 
   document.getElementById("btn-edu-detail-close").addEventListener("click", closeDetail);
