@@ -92,7 +92,7 @@ function renderEmergencyList() {
     .map(
       (e) => `
       <tr>
-        <td class="title-cell"><button type="button" class="link-title" data-action="detail" data-id="${e.id}">${e.title}</button></td>
+        <td class="title-cell"><button type="button" class="link-title" data-action="detail" data-id="${e.id}">${e.title}</button>${renderViewsLikesBadge(e)}</td>
         <td><span class="badge danger">${e.category}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${e.id}">수정</button>
@@ -117,10 +117,30 @@ function renderEmergencyList() {
 
 /* ---------- 모달 (상세/등록/수정 공용) ---------- */
 
+function renderEmergencyLikesBar(item) {
+  const mount = document.getElementById("views-likes-mount");
+  if (!item) {
+    mount.innerHTML = "";
+    return;
+  }
+  mount.innerHTML = renderViewsLikesHtml(item);
+  mount.querySelector(".like-btn").addEventListener("click", () => {
+    toggleLike(item);
+    saveData("emergencies", emergencies);
+    renderEmergencyLikesBar(item);
+  });
+}
+
 function openModal(id) {
   const backdrop = document.getElementById("modal-backdrop");
   const title = document.getElementById("modal-title");
   const item = id ? getEmergency(id) : null;
+
+  if (item) {
+    recordView(item);
+    saveData("emergencies", emergencies);
+  }
+  renderEmergencyLikesBar(item);
 
   document.getElementById("f-id").value = id || "";
   document.getElementById("f-title").value = item ? item.title : "";
@@ -136,6 +156,7 @@ function openModal(id) {
 
 function closeModal() {
   document.getElementById("modal-backdrop").classList.remove("open");
+  renderEmergencyList(); // 조회수/좋아요가 목록 뱃지에도 바로 반영되게 갱신
 }
 
 /* ---------- 초기화 ---------- */

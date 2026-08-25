@@ -1269,6 +1269,49 @@ body {
   justify-content: flex-end;
 }
 
+/* ---------- 조회수 · 좋아요 (매뉴얼/게시판 공용) ---------- */
+
+.views-likes-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 14px;
+}
+
+.views-count {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.like-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.like-btn.liked {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.views-likes-inline {
+  margin-left: 8px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
 .edu-history-day {
   border-top: 1px solid var(--color-border);
   padding-top: 14px;

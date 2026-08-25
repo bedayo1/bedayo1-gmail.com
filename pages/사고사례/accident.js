@@ -77,6 +77,7 @@ function renderAccidentList() {
         <td class="title-cell">
           <a data-action="detail" data-id="${a.id}">${a.title}</a>
           ${isNoticeCurrentlyActive(a) ? `<span class="badge danger">🚨 긴급공지 노출중</span>` : ""}
+          ${renderViewsLikesBadge(a)}
         </td>
         <td><span class="badge info">${a.line}</span></td>
         <td>${a.date}</td>
@@ -112,9 +113,22 @@ function renderBulletinSection(label, value) {
     </div>`;
 }
 
+function renderAccidentLikesBar(item) {
+  const mount = document.getElementById("views-likes-mount");
+  mount.innerHTML = renderViewsLikesHtml(item);
+  mount.querySelector(".like-btn").addEventListener("click", () => {
+    toggleLike(item);
+    saveData("accidents", accidents);
+    renderAccidentLikesBar(item);
+  });
+}
+
 function openDetail(id) {
   const item = getAccident(id);
   if (!item) return;
+
+  recordView(item);
+  saveData("accidents", accidents);
 
   const photos = item.photos || [];
   const gallery = photos
@@ -137,6 +151,7 @@ function openDetail(id) {
       <h2>${item.title}</h2>
       <span class="bulletin-no">${item.no || ""}</span>
     </div>
+    <div class="views-likes-bar" id="views-likes-mount"></div>
     <div class="bulletin-body">
       <div class="bulletin-main">
         ${renderBulletinSection("장애(발생)개요", item.overview)}
@@ -167,11 +182,13 @@ function openDetail(id) {
       </div>
     </div>
   `;
+  renderAccidentLikesBar(item);
   document.getElementById("detail-backdrop").classList.add("open");
 }
 
 function closeDetail() {
   document.getElementById("detail-backdrop").classList.remove("open");
+  renderAccidentList(); // 조회수/좋아요가 목록 뱃지에도 바로 반영되게 갱신
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

@@ -103,7 +103,7 @@ function renderMalfunctionList() {
       (m) => `
       <tr>
         <td class="mobile-hide">${m.no || ""}</td>
-        <td class="title-cell"><a data-action="detail" data-id="${m.id}">${m.title}</a></td>
+        <td class="title-cell"><a data-action="detail" data-id="${m.id}">${m.title}</a>${renderViewsLikesBadge(m)}</td>
         <td><span class="badge info">${m.vehicleType}</span></td>
         <td class="actions">
           <button class="btn secondary small" data-action="edit" data-id="${m.id}">수정</button>
@@ -179,12 +179,26 @@ function renderDetailVideos(item) {
     </div>`;
 }
 
+function renderMalfunctionLikesBar(item) {
+  const mount = document.getElementById("views-likes-mount");
+  mount.innerHTML = renderViewsLikesHtml(item);
+  mount.querySelector(".like-btn").addEventListener("click", () => {
+    toggleLike(item);
+    saveData("malfunctions", malfunctions);
+    renderMalfunctionLikesBar(item);
+  });
+}
+
 function openDetail(id) {
   const item = getMalfunction(id);
   if (!item) return;
 
+  recordView(item);
+  saveData("malfunctions", malfunctions);
+
   document.getElementById("detail-title").textContent = item.title;
   document.getElementById("detail-body").innerHTML = `
+    <div class="views-likes-bar" id="views-likes-mount"></div>
     <div class="detail-section">
       <h4>차종</h4>
       <span class="badge info">${item.vehicleType}</span>
@@ -198,11 +212,13 @@ function openDetail(id) {
     ${renderDetailPhoto(item)}
     ${renderDetailVideos(item)}
   `;
+  renderMalfunctionLikesBar(item);
   document.getElementById("detail-backdrop").classList.add("open");
 }
 
 function closeDetail() {
   document.getElementById("detail-backdrop").classList.remove("open");
+  renderMalfunctionList(); // 조회수/좋아요가 목록 뱃지에도 바로 반영되게 갱신
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */

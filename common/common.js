@@ -195,6 +195,53 @@ function wirePhotoEditor(editor, addBtn, pickerInput) {
   });
 }
 
+/* ---------- 조회수 · 좋아요 (매뉴얼/게시판 공용) ---------- */
+/* item.views(숫자), item.likedBy(사번/관리자ID 배열)를 직접 다룬다.
+   저장은 각 페이지가 이미 갖고 있는 컬렉션 배열 + saveData 로 하므로, 여기서는 localStorage에 직접 접근하지 않는다. */
+
+function currentUserKey() {
+  const session = loadData("session", null);
+  if (!session) return "guest";
+  return session.type === "admin" ? "admin" : session.empId || "guest";
+}
+
+function recordView(item) {
+  item.views = (item.views || 0) + 1;
+}
+
+// 좋아요를 누른 상태로 토글하고, 토글 후 "내가 좋아요를 누른 상태인지"를 반환한다.
+function toggleLike(item) {
+  const userKey = currentUserKey();
+  if (!item.likedBy) item.likedBy = [];
+  const idx = item.likedBy.indexOf(userKey);
+  if (idx >= 0) {
+    item.likedBy.splice(idx, 1);
+    return false;
+  }
+  item.likedBy.push(userKey);
+  return true;
+}
+
+function isLikedByMe(item) {
+  return !!(item.likedBy && item.likedBy.includes(currentUserKey()));
+}
+
+function renderViewsLikesHtml(item) {
+  const liked = isLikedByMe(item);
+  return `
+    <span class="views-count" title="조회수">👁 ${item.views || 0}</span>
+    <button type="button" class="like-btn ${liked ? "liked" : ""}" title="좋아요">
+      ${liked ? "❤️" : "🤍"} <span class="like-count">${(item.likedBy || []).length}</span>
+    </button>`;
+}
+
+// 목록 행에 붙이는 짧은 뱃지 (조회수/좋아요가 0이면 표시하지 않는다).
+function renderViewsLikesBadge(item) {
+  const likeCount = (item.likedBy || []).length;
+  if (!item.views && !likeCount) return "";
+  return `<span class="views-likes-inline">${item.views ? `👁 ${item.views}` : ""}${likeCount ? ` ❤️ ${likeCount}` : ""}</span>`;
+}
+
 /* ---------- 테마 (라이트/다크 전환) ---------- */
 
 function applyTheme() {

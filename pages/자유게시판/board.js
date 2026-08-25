@@ -82,7 +82,7 @@ function renderPostList() {
     .map(
       (p) => `
       <tr>
-        <td class="title-cell"><a data-action="detail" data-id="${p.id}">${p.title}</a>${p.comments && p.comments.length ? ` <span class="badge neutral">💬 ${p.comments.length}</span>` : ""}</td>
+        <td class="title-cell"><a data-action="detail" data-id="${p.id}">${p.title}</a>${p.comments && p.comments.length ? ` <span class="badge neutral">💬 ${p.comments.length}</span>` : ""}${renderViewsLikesBadge(p)}</td>
         <td>${p.author}</td>
         <td class="mobile-hide">${p.date}</td>
         <td class="actions">
@@ -142,15 +142,29 @@ function renderCommentList(post) {
   });
 }
 
+function renderBoardLikesBar(item) {
+  const mount = document.getElementById("views-likes-mount");
+  mount.innerHTML = renderViewsLikesHtml(item);
+  mount.querySelector(".like-btn").addEventListener("click", () => {
+    toggleLike(item);
+    saveData("posts", posts);
+    renderBoardLikesBar(item);
+  });
+}
+
 function openDetail(id) {
   const item = getPost(id);
   if (!item) return;
   currentDetailId = id;
 
+  recordView(item);
+  saveData("posts", posts);
+
   document.getElementById("detail-title").textContent = item.title;
   document.getElementById("detail-meta").textContent = `${item.author} · ${item.date}`;
   document.getElementById("detail-content").textContent = item.content;
   document.getElementById("c-author").value = (profile && profile.name) || "";
+  renderBoardLikesBar(item);
   renderCommentList(item);
 
   document.getElementById("detail-backdrop").classList.add("open");
@@ -159,6 +173,7 @@ function openDetail(id) {
 function closeDetail() {
   document.getElementById("detail-backdrop").classList.remove("open");
   currentDetailId = null;
+  renderPostList(); // 조회수/좋아요가 목록 뱃지에도 바로 반영되게 갱신
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
