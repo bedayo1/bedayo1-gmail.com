@@ -437,6 +437,7 @@ function renderStep3Html() {
       <div class="notice-card-item">
         <div class="notice-card-title">${n.title}</div>
         <div class="notice-card-meta">${n.content || ""}</div>
+        ${renderPhotoGalleryHtml(n.photos)}
       </div>`
         )
         .join("")
@@ -631,7 +632,7 @@ function finishAttendance() {
       ackedNoticeIds: [...wizardData.ackedNoticeIds],
       directives: loadData("adminNotices", [])
         .filter((n) => n.type === "지시사항" && isWithinNoticePeriod(n))
-        .map((n) => ({ title: n.title, content: n.content || "" })),
+        .map((n) => ({ title: n.title, content: n.content || "", photos: n.photos || [] })),
     },
     education: {
       dutyType: [0, 6].includes(new Date().getDay()) ? "휴일" : "평일",
@@ -748,7 +749,10 @@ function renderAttendanceDetailHtml(record) {
 
   const directiveHtml = n.directives.length
     ? n.directives
-        .map((item) => `<div class="notice-card-item"><div class="notice-card-title">${item.title}</div><div class="notice-card-meta">${item.content}</div></div>`)
+        .map(
+          (item) =>
+            `<div class="notice-card-item"><div class="notice-card-title">${item.title}</div><div class="notice-card-meta">${item.content}</div>${renderPhotoGalleryHtml(item.photos)}</div>`
+        )
         .join("")
     : `<div class="empty-state">등록된 운전지시사항이 없었습니다.</div>`;
 

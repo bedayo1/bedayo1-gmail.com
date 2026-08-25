@@ -8,3 +8,30 @@
 #notice-tbody td.title-cell a:hover {
   text-decoration: underline;
 }
+
+.notice-new-badge {
+  margin-left: 6px;
+}
+
+.notice-type-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notice-type-tabs button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.notice-type-tabs button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}

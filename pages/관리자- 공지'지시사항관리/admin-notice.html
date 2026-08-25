@@ -42,38 +42,62 @@
 
 <!-- 등록/수정 모달 -->
 <div class="modal-backdrop" id="modal-backdrop">
-  <div class="modal">
-    <h2 class="page-title" style="font-size:18px;" id="modal-title">등록</h2>
-    <form id="admin-notice-form">
-      <input type="hidden" id="f-id">
-      <div class="form-row">
-        <label for="f-title">제목</label>
-        <input type="text" id="f-title" required>
-      </div>
-      <div class="form-row">
-        <label for="f-type">구분</label>
-        <select id="f-type">
-          <option value="공지사항">공지사항</option>
-          <option value="지시사항">지시사항</option>
-        </select>
-      </div>
-      <div class="form-row">
-        <label for="f-content">내용</label>
-        <textarea id="f-content" rows="4" required></textarea>
-      </div>
-      <div class="form-row">
-        <label for="f-start-date">노출 시작일 (선택 — 비워두면 즉시부터, 지시사항이 홈 화면 출근 절차에 노출되는 기간)</label>
-        <input type="date" id="f-start-date">
-      </div>
-      <div class="form-row">
-        <label for="f-end-date">노출 종료일 (선택 — 비워두면 계속 노출)</label>
-        <input type="date" id="f-end-date">
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn secondary" id="btn-cancel">취소</button>
-        <button type="submit" class="btn">저장</button>
-      </div>
-    </form>
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="modal-title">등록</h2>
+      <button type="button" class="wizard-close" id="btn-cancel">×</button>
+    </div>
+    <div class="wizard-body">
+      <form id="admin-notice-form">
+        <input type="hidden" id="f-id">
+        <div class="form-row">
+          <label for="f-title">제목</label>
+          <input type="text" id="f-title" required>
+        </div>
+        <div class="form-row">
+          <label for="f-type">구분</label>
+          <select id="f-type"></select>
+        </div>
+        <div class="form-row">
+          <label for="f-content">내용 (직접 입력 — 아래 문서 사진을 첨부하는 경우 비워둬도 됩니다)</label>
+          <textarea id="f-content" rows="4"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="editor">[문서/사진 첨부] — 공문·안내문 사진을 이 안으로 끌어다 놓거나 붙여넣으면 그 자리에 그대로 삽입되어 직원 화면에도 그대로 보여집니다. 여러 장(여러 페이지)도 순서대로 추가할 수 있어요.</label>
+          <div class="photo-editor-toolbar">
+            <button type="button" class="btn secondary small" id="btn-add-photo">+ 사진 추가</button>
+            <input type="file" id="f-photo-picker" accept="image/*" multiple style="display:none">
+          </div>
+          <div id="editor" class="photo-editor" contenteditable="true"></div>
+        </div>
+        <div class="form-row">
+          <label for="f-start-date">노출 시작일 (선택 — 비워두면 즉시부터, 지시사항이 홈 화면 출근 절차에 노출되는 기간)</label>
+          <input type="date" id="f-start-date">
+        </div>
+        <div class="form-row">
+          <label for="f-end-date">노출 종료일 (선택 — 비워두면 계속 노출)</label>
+          <input type="date" id="f-end-date">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" id="btn-cancel2">취소</button>
+          <button type="submit" class="btn">저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 확인현황 모달 -->
+<div class="modal-backdrop" id="ack-backdrop">
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="ack-title">확인현황</h2>
+      <button type="button" class="wizard-close" id="btn-ack-close">×</button>
+    </div>
+    <div class="wizard-body" id="ack-body"></div>
+    <div class="modal-actions wizard-actions">
+      <button type="button" class="btn secondary" id="btn-ack-close2">닫기</button>
+    </div>
   </div>
 </div>
 

@@ -262,6 +262,59 @@ function renderViewsLikesBadge(item) {
   return `<span class="views-likes-inline">${item.views ? `👁 ${item.views}` : ""}${likeCount ? ` ❤️ ${likeCount}` : ""}</span>`;
 }
 
+/* ---------- 공지사항 구분 · 확인사인(개인별 NEW) ---------- */
+/* 공지사항 화면(notice.js)의 필터탭과 관리자 등록화면(admin-notice.js)의 구분 셀렉트가 공용으로 쓴다. */
+
+const NOTICE_TYPES = ["지시사항", "산업안전보건교육", "지시전달부", "알림", "관련규정"];
+const NOTICE_TYPE_BADGE_CLASS = {
+  지시사항: "danger",
+  산업안전보건교육: "info",
+  지시전달부: "info",
+  알림: "neutral",
+  관련규정: "neutral",
+};
+
+// 공지사항 하나를 로그인한 직원이 "확인" 했는지 여부. item.ackedBy = [{empId, name, ackedAt}]
+function isAckedByMe(item) {
+  const profile = loadData("profile", null);
+  if (!profile) return false;
+  return !!(item.ackedBy && item.ackedBy.some((a) => a.empId === profile.empId));
+}
+
+// 확인 처리(서명). 이미 확인한 경우 아무 일도 하지 않는다. 새로 확인 처리됐으면 true 반환.
+function ackNotice(item) {
+  const profile = loadData("profile", null);
+  if (!profile) return false;
+  if (!item.ackedBy) item.ackedBy = [];
+  if (item.ackedBy.some((a) => a.empId === profile.empId)) return false;
+  item.ackedBy.push({ empId: profile.empId, name: profile.name, ackedAt: new Date().toISOString() });
+  return true;
+}
+
+// 공지사항 등에 첨부된 photos([{file, caption}], 사진 에디터로 만든 문서/사진 첨부)를 읽기 전용으로 보여준다.
+function renderPhotoGalleryHtml(photos) {
+  if (!photos || photos.length === 0) return "";
+  return `
+    <div class="photo-gallery">
+      ${photos
+        .map(
+          (p) => `
+        <div class="photo-gallery-item">
+          <img src="${p.file}" alt="${p.caption || "첨부 사진"}">
+          ${p.caption ? `<div class="photo-gallery-caption">${p.caption}</div>` : ""}
+        </div>`
+        )
+        .join("")}
+    </div>`;
+}
+
+// 사이드바 NEW 뱃지, 목록 필터 등에서 쓰는 "이 직원이 아직 확인 안 한, 지금 노출 중인 공지" 목록.
+function getUnackedNoticesFor(empId) {
+  return loadData("adminNotices", []).filter(
+    (n) => isWithinNoticePeriod(n) && !(n.ackedBy && n.ackedBy.some((a) => a.empId === empId))
+  );
+}
+
 /* ---------- 테마 (라이트/다크 전환) ---------- */
 
 function applyTheme() {
@@ -1166,13 +1219,21 @@ function renderSidebar(activeKey) {
   // 직원 계정은 메인 메뉴만, 관리자 계정은 관리자 메뉴만 본다 (완전히 분리된 두 모드).
   const allowedGroup = session && session.type === "admin" ? "admin" : "main";
 
+  // 공지사항 미확인 건수 — 직원 세션일 때만 사이드바 메뉴에 NEW 뱃지로 보여준다.
+  const unackedNoticeCount =
+    session && session.type === "employee" ? getUnackedNoticesFor(session.empId).length : 0;
+
   const sections = NAV_GROUPS.filter((group) => group.key === allowedGroup).map((group) => {
     const items = NAV_ITEMS.filter((item) => item.group === group.key);
     if (!items.length) return "";
     const links = items
       .map((item) => {
         const cls = item.key === activeKey ? "active" : "";
-        return `<a href="${base}${item.path}" class="${cls}"><span class="icon">${item.icon}</span>${item.label}</a>`;
+        const newBadge =
+          item.key === "notice" && unackedNoticeCount > 0
+            ? `<span class="badge danger sidebar-new-badge">NEW ${unackedNoticeCount}</span>`
+            : "";
+        return `<a href="${base}${item.path}" class="${cls}"><span class="icon">${item.icon}</span>${item.label}${newBadge}</a>`;
       })
       .join("");
     return `<div class="sidebar-title">${group.title}</div><ul class="sidebar-menu">${links}</ul>`;
