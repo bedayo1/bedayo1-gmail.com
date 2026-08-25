@@ -732,6 +732,59 @@ function summarizeEducation(records) {
   };
 }
 
+// 월별(YYYY-MM) 응시 횟수/정답률/평균점수 추이 — 마이페이지·관리자 모니터링의 "월별 학습 리포트" 공용.
+// 오래된 달 -> 최근 달 순으로 정렬해서 반환한다 (그래프를 왼쪽부터 그리기 좋게).
+function buildMonthlyEducationTrend(records) {
+  const byMonth = {};
+  records
+    .filter((r) => !r.excluded && r.date)
+    .forEach((r) => {
+      const month = r.date.slice(0, 7); // "YYYY-MM"
+      if (!byMonth[month]) byMonth[month] = [];
+      byMonth[month].push(r);
+    });
+
+  return Object.keys(byMonth)
+    .sort()
+    .map((month) => {
+      const summary = summarizeEducation(byMonth[month]);
+      return { month, ...summary };
+    });
+}
+
+function renderMonthlyTrendHtml(trend) {
+  if (!trend || trend.length === 0) {
+    return `<div class="empty-state">아직 응시 이력이 없습니다.</div>`;
+  }
+  return `
+    <div class="trend-chart">
+      ${trend
+        .map(
+          (t) => `
+        <div class="trend-bar-col">
+          <div class="trend-bar-track">
+            <div class="trend-bar" style="height:${Math.max(t.accuracy, 2)}%;" title="${t.month} 정답률 ${t.accuracy}%"></div>
+          </div>
+          <div class="trend-bar-value">${t.accuracy}%</div>
+          <div class="trend-bar-label">${t.month.slice(5)}월</div>
+        </div>`
+        )
+        .join("")}
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="trend-table">
+        <thead>
+          <tr><th>월</th><th>응시 횟수</th><th>평균 점수</th><th>정답률</th></tr>
+        </thead>
+        <tbody>
+          ${trend
+            .map((t) => `<tr><td>${t.month}</td><td>${t.count}회</td><td>${t.avgScore}점</td><td>${t.accuracy}%</td></tr>`)
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
 // 오답이 있었던 매뉴얼(문제)을 오답률 순으로 정리 — "취약분야"
 function analyzeWeakAreas(records, limit) {
   const stats = {};

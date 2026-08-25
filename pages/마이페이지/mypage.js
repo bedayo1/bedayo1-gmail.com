@@ -57,6 +57,34 @@ function renderEducationHistory() {
     : `<div class="empty-state">아직 응시 이력이 없습니다. 홈 화면에서 출근을 완료하면 여기에 기록됩니다.</div>`;
 }
 
+function renderMonthlyTrend() {
+  const records = getAttendancesFor(profile.empId);
+  const trend = buildMonthlyEducationTrend(records);
+  document.getElementById("my-monthly-trend").innerHTML = renderMonthlyTrendHtml(trend);
+}
+
+function downloadMonthlyReport() {
+  const records = getAttendancesFor(profile.empId);
+  const trend = buildMonthlyEducationTrend(records);
+  if (trend.length === 0) {
+    showToast("다운로드할 학습 이력이 없습니다.");
+    return;
+  }
+  const summary = summarizeEducation(records);
+  const bodyHtml = `
+    <div class="meta">${profile.name} (${profile.empId}) · ${profile.dept} · 생성일 ${formatDate(new Date())}</div>
+    <h4>전체 요약</h4>
+    <p>총 응시 ${summary.count}회 · 평균 ${summary.avgScore}점 · 정답률 ${summary.accuracy}%</p>
+    <h4>차종별 정답률</h4>
+    ${renderVehicleTypeStatsHtml(analyzeVehicleTypeStats(records))}
+    <h4>취약분야</h4>
+    ${renderWeakAreasHtml(analyzeWeakAreas(records, 8))}
+    <h4>월별 추이</h4>
+    ${renderMonthlyTrendHtml(trend)}
+  `;
+  downloadAsHtml(`학습리포트_${profile.name}`, `${profile.name} 학습 리포트`, bodyHtml);
+}
+
 function renderCourseCompletions() {
   const allCourses = loadData("courses", []);
   const myCompletions = getCompletionsFor(profile.empId);
@@ -88,7 +116,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLayout("mypage");
   renderProfile();
   renderEducationHistory();
+  renderMonthlyTrend();
   renderCourseCompletions();
+
+  document.getElementById("btn-report-download").addEventListener("click", downloadMonthlyReport);
 
   document.getElementById("pw-form").addEventListener("submit", (e) => {
     e.preventDefault();

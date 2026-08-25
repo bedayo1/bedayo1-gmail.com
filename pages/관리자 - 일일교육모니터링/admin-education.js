@@ -3,6 +3,8 @@
    원본 데이터는 attendances(홈 화면 출근 마법사가 저장) 이고, 요약/취약분야 계산은 common.js 의
    summarizeEducation() / analyzeWeakAreas() 를 그대로 재사용한다. */
 
+let currentDetailEmpId = null;
+
 // 직원 한 명당 { ...employee, count, avgScore, accuracy, weak, records } 형태로 요약을 만든다.
 function buildEmployeeEducationSummaries() {
   const employees = loadData("employees", []);
@@ -168,10 +170,15 @@ function openDetail(empId) {
       ${renderWeakAreasHtml(s.weak)}
     </div>
     <div class="wizard-section">
+      <h4>월별 학습 리포트</h4>
+      ${renderMonthlyTrendHtml(buildMonthlyEducationTrend(s.records))}
+    </div>
+    <div class="wizard-section">
       <h4>최근 응시 이력${eduRecords.length > 5 ? ` (최근 5건 · 전체 ${eduRecords.length}건)` : ""}</h4>
       ${historyHtml || `<div class="empty-state">응시 이력이 없습니다.</div>`}
     </div>
   `;
+  currentDetailEmpId = empId;
   document.getElementById("edu-detail-backdrop").classList.add("open");
 }
 
@@ -189,5 +196,24 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-edu-detail-close2").addEventListener("click", closeDetail);
   document.getElementById("edu-detail-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "edu-detail-backdrop") closeDetail();
+  });
+
+  document.getElementById("btn-edu-report-download").addEventListener("click", () => {
+    const summaries = buildEmployeeEducationSummaries();
+    const s = summaries.find((x) => x.empId === currentDetailEmpId);
+    if (!s) return;
+    const trend = buildMonthlyEducationTrend(s.records);
+    const bodyHtml = `
+      <div class="meta">${s.name} (${s.empId}) · ${s.dept} · 생성일 ${formatDate(new Date())}</div>
+      <h4>전체 요약</h4>
+      <p>총 응시 ${s.count}회 · 평균 ${s.avgScore}점 · 정답률 ${s.accuracy}%</p>
+      <h4>차종별 정답률</h4>
+      ${renderVehicleTypeStatsHtml(analyzeVehicleTypeStats(s.records))}
+      <h4>취약분야</h4>
+      ${renderWeakAreasHtml(s.weak)}
+      <h4>월별 추이</h4>
+      ${renderMonthlyTrendHtml(trend)}
+    `;
+    downloadAsHtml(`학습리포트_${s.name}`, `${s.name} 학습 리포트`, bodyHtml);
   });
 });

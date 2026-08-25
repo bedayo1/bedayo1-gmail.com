@@ -1079,6 +1079,73 @@ body {
   font-size: 12px;
 }
 
+/* ---------- 월별 학습 리포트 (마이페이지 · 관리자 모니터링 공용) ---------- */
+
+.trend-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 4px 4px;
+  margin-bottom: 14px;
+}
+
+.trend-bar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.trend-bar-track {
+  width: 24px;
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  background: var(--color-surface-hover);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.trend-bar {
+  width: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: height 0.2s ease;
+}
+
+.trend-bar-value {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.trend-bar-label {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.trend-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.trend-table th,
+.trend-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.trend-table th {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 12px;
+}
+
 .retraining-badge {
   background: var(--color-danger-bg);
   color: var(--color-danger);
