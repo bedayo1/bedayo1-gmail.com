@@ -206,54 +206,9 @@ function closeDetail() {
 }
 
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
-/* 관련사진 입력: 네이버 카페 글쓰기처럼 사진을 끌어다 놓으면 그 자리에 사진이 삽입되고,
-   바로 밑에 설명을 적을 수 있는 한 줄이 함께 생긴다. */
-
-function insertPhotoBlock(dataUrl, captionText) {
-  const editor = document.getElementById("photo-editor");
-
-  const img = document.createElement("img");
-  img.src = dataUrl;
-  editor.appendChild(img);
-
-  const caption = document.createElement("div");
-  caption.className = "photo-editor-caption";
-  caption.contentEditable = "true";
-  caption.textContent = captionText || "";
-  editor.appendChild(caption);
-
-  caption.focus();
-}
-
-function handlePhotoFiles(fileList) {
-  Array.from(fileList || []).forEach((file) => {
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => insertPhotoBlock(reader.result, "");
-    reader.readAsDataURL(file);
-  });
-}
-
-function populatePhotoEditor(photos) {
-  const editor = document.getElementById("photo-editor");
-  editor.innerHTML = "";
-  (photos || []).forEach((p) => insertPhotoBlock(p.file, p.caption || ""));
-  editor.blur();
-}
-
-function collectPhotosFromEditor() {
-  const editor = document.getElementById("photo-editor");
-  const photos = [];
-  editor.querySelectorAll("img").forEach((img) => {
-    let captionText = "";
-    const next = img.nextElementSibling;
-    if (next && next.classList.contains("photo-editor-caption")) {
-      captionText = next.textContent.trim();
-    }
-    photos.push({ file: img.getAttribute("src"), caption: captionText });
-  });
-  return photos;
-}
+/* 관련사진 입력(카페 글쓰기 스타일 드래그·붙여넣기 삽입)은 common.js 의
+   insertPhotoBlock/handlePhotoFiles/populatePhotoEditor/collectPhotosFromEditor/wirePhotoEditor 공용 함수를 쓴다
+   (사례공유게시판 글/댓글 본문과 동일한 에디터). */
 
 function openModal(id) {
   const backdrop = document.getElementById("modal-backdrop");
@@ -270,7 +225,7 @@ function openModal(id) {
   document.getElementById("f-reference").value = item ? item.reference || "" : "";
   document.getElementById("f-notes").value = item ? item.notes || "" : "";
   document.getElementById("f-photo-picker").value = "";
-  populatePhotoEditor(item ? item.photos : []);
+  populatePhotoEditor(document.getElementById("photo-editor"), item ? item.photos : []);
   document.getElementById("f-videos").value = item ? videosToText(item.videos) : "";
   title.textContent = item ? "매뉴얼 수정" : "매뉴얼 추가";
 
@@ -307,39 +262,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.target.id === "detail-backdrop") closeDetail();
   });
 
-  const photoEditor = document.getElementById("photo-editor");
-
-  document.getElementById("btn-add-photo").addEventListener("click", () => {
-    document.getElementById("f-photo-picker").click();
-  });
-
-  document.getElementById("f-photo-picker").addEventListener("change", (e) => {
-    handlePhotoFiles(e.target.files);
-    e.target.value = "";
-  });
-
-  photoEditor.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    photoEditor.classList.add("dragover");
-  });
-  photoEditor.addEventListener("dragleave", () => {
-    photoEditor.classList.remove("dragover");
-  });
-  photoEditor.addEventListener("drop", (e) => {
-    e.preventDefault();
-    photoEditor.classList.remove("dragover");
-    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-      handlePhotoFiles(e.dataTransfer.files);
-    }
-  });
-  // contenteditable 안에서 이미지 붙여넣기도 지원
-  photoEditor.addEventListener("paste", (e) => {
-    const items = Array.from(e.clipboardData?.items || []);
-    const imageItems = items.filter((it) => it.type.startsWith("image/"));
-    if (imageItems.length === 0) return;
-    e.preventDefault();
-    handlePhotoFiles(imageItems.map((it) => it.getAsFile()));
-  });
+  wirePhotoEditor(
+    document.getElementById("photo-editor"),
+    document.getElementById("btn-add-photo"),
+    document.getElementById("f-photo-picker")
+  );
 
   document.getElementById("malfunction-form").addEventListener("submit", (e) => {
     e.preventDefault();
@@ -353,7 +280,7 @@ document.addEventListener("DOMContentLoaded", () => {
       state: document.getElementById("f-state").value.trim(),
       reference: document.getElementById("f-reference").value.trim(),
       notes: document.getElementById("f-notes").value.trim(),
-      photos: collectPhotosFromEditor(),
+      photos: collectPhotosFromEditor(document.getElementById("photo-editor")),
       videos: parseVideosText(document.getElementById("f-videos").value),
     };
 

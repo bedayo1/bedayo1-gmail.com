@@ -39,7 +39,9 @@ function appendResultCards(results) {
 
 function handleUserMessage(text) {
   appendUserText(text);
-  const results = searchAll(text, 5);
+  // 교육과정관리·사고사례·고장처치/이례상황 매뉴얼·사례공유게시판 등 SEARCH_SOURCES에 등록된
+  // 모든 자료의 전체 내용을 대상으로 찾는다 (common.js searchAll/buildSearchIndex 참고).
+  const results = searchAll(text, 8);
   if (results.length === 0) {
     appendBotText(
       `"${text}"과(와) 관련된 자료를 찾지 못했어요. 증상이나 상황을 조금 더 구체적으로 적어주시면 다시 찾아볼게요.`

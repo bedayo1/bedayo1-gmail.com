@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기관사 안전교육 - 사례공유게시판</title>
+<link rel="stylesheet" href="../../common/common.css">
+<link rel="stylesheet" href="./case-share.css">
+</head>
+<body>
+
+<div id="site-header"></div>
+<div id="site-sidebar"></div>
+
+<main class="app-main">
+  <h1 class="page-title">사례공유게시판</h1>
+  <p class="page-desc">현장에서 겪은 사례·노하우를 사진과 함께 자유롭게 공유하는 공간입니다.</p>
+
+  <section class="card">
+    <div class="toolbar">
+      <div></div>
+      <button class="btn" id="btn-new">+ 사례 작성</button>
+    </div>
+
+    <div class="list-search" id="case-search"></div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>제목</th>
+          <th>작성자</th>
+          <th>작성일</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="case-tbody"></tbody>
+    </table>
+    <div class="pagination-bar" id="case-pager"></div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<!-- 상세보기 (본문 + 댓글) -->
+<div class="modal-backdrop" id="detail-backdrop">
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="detail-title">-</h2>
+      <button type="button" class="wizard-close" id="btn-detail-close">×</button>
+    </div>
+    <div class="wizard-body">
+      <div class="wizard-section">
+        <div class="post-detail-meta" id="detail-meta"></div>
+        <div class="post-detail-content" id="detail-content"></div>
+      </div>
+      <div class="wizard-section">
+        <h4>댓글 <span id="comment-count"></span></h4>
+        <div id="comment-list"></div>
+        <form id="comment-form" class="comment-form-rich">
+          <input type="text" id="c-author" placeholder="이름" required>
+          <div class="photo-editor-toolbar">
+            <button type="button" class="btn secondary small" id="btn-c-add-photo">+ 사진 추가</button>
+            <input type="file" id="c-photo-picker" accept="image/*" multiple style="display:none">
+          </div>
+          <div id="c-editor" class="photo-editor" contenteditable="true"></div>
+          <div class="modal-actions">
+            <button type="submit" class="btn small">댓글 등록</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="modal-actions wizard-actions">
+      <button type="button" class="btn secondary" id="btn-detail-close2">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 등록/수정 모달 -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal wizard-modal">
+    <div class="wizard-header">
+      <h2 class="page-title" style="font-size:16px; margin:0;" id="modal-title">사례 작성</h2>
+      <button type="button" class="wizard-close" id="btn-cancel">×</button>
+    </div>
+    <div class="wizard-body">
+      <form id="case-form">
+        <input type="hidden" id="f-id">
+        <div class="form-row">
+          <label for="f-title">제목</label>
+          <input type="text" id="f-title" required>
+        </div>
+        <div class="form-row">
+          <label for="f-author">작성자</label>
+          <input type="text" id="f-author" required>
+        </div>
+        <div class="form-row">
+          <label for="editor">[내용] — 사진을 이 안으로 끌어다 놓거나 붙여넣으면 그 자리에 삽입됩니다. 사진 밑에 바로 설명을 적을 수 있어요.</label>
+          <div class="photo-editor-toolbar">
+            <button type="button" class="btn secondary small" id="btn-add-photo">+ 사진 추가</button>
+            <input type="file" id="f-photo-picker" accept="image/*" multiple style="display:none">
+          </div>
+          <div id="editor" class="photo-editor" contenteditable="true"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" id="btn-cancel2">취소</button>
+          <button type="submit" class="btn">등록</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="../../common/common.js"></script>
+<script src="./case-share.js"></script>
+</body>
+</html>

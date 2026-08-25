@@ -1078,6 +1078,197 @@ body {
   color: var(--color-danger);
 }
 
+/* ---------- 사진 첨부 에디터 (카페 글쓰기 스타일 공용) ---------- */
+
+.photo-editor-toolbar {
+  margin-bottom: 6px;
+}
+
+.photo-editor {
+  min-height: 120px;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.photo-editor:empty::before {
+  content: "여기에 사진을 드래그하거나 위 '+ 사진 추가' 버튼을 눌러 추가하세요";
+  color: var(--color-text-muted);
+}
+
+.photo-editor.dragover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+}
+
+.photo-editor img {
+  display: block;
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  margin: 6px 0 2px;
+}
+
+.photo-editor .photo-editor-caption {
+  min-height: 1.4em;
+  margin-bottom: 10px;
+  outline: none;
+}
+
+.photo-editor .photo-editor-caption:empty::before {
+  content: "사진 설명 입력";
+  color: var(--color-text-muted);
+}
+
+.photo-editor p {
+  margin: 0 0 8px;
+}
+
+/* ---------- 게시글 상세 / 댓글 (자유게시판·사례공유게시판 공용) ---------- */
+
+.post-detail-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.post-detail-content {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.post-detail-content img {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  margin: 6px 0 2px;
+}
+
+.post-detail-content .photo-editor-caption {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+}
+
+.comment-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.comment-item:last-child {
+  border-bottom: none;
+}
+
+.comment-item .comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.comment-item .comment-author {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.comment-item .comment-date {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.comment-item .comment-content {
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.comment-item .comment-content img {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  margin: 6px 0 2px;
+}
+
+.comment-item .comment-del {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.comment-item .comment-del:hover {
+  color: var(--color-danger);
+}
+
+.comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.comment-form #c-author {
+  width: 100px;
+  flex-shrink: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.comment-form #c-content {
+  flex: 1;
+  min-width: 0;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+@media (max-width: 480px) {
+  .comment-form {
+    flex-wrap: wrap;
+  }
+  .comment-form #c-author {
+    width: 100%;
+  }
+}
+
+/* 사진 첨부가 가능한 리치 댓글 폼(사례공유게시판) — 인풋 한 줄 + 그 아래 사진 에디터 */
+.comment-form-rich #c-author {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--color-text);
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.comment-form-rich .photo-editor {
+  min-height: 60px;
+  max-height: 220px;
+}
+
+.comment-form-rich .modal-actions {
+  margin-top: 8px;
+  justify-content: flex-end;
+}
+
 .edu-history-day {
   border-top: 1px solid var(--color-border);
   padding-top: 14px;

@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { key: "dia", label: "다이아", path: "pages/다이아/dia.html", icon: "🚆", group: "main" },
   { key: "malfunction", label: "고장처치 매뉴얼", path: "pages/고장조치메뉴얼/malfunction.html", icon: "🔧", group: "main" },
   { key: "emergency", label: "이례상황 매뉴얼", path: "pages/이례상황메뉴얼/emergency.html", icon: "🚨", group: "main" },
+  { key: "case-share", label: "사례공유게시판", path: "pages/사례공유게시판/case-share.html", icon: "🖼️", group: "main" },
   { key: "board", label: "자유게시판", path: "pages/자유게시판/board.html", icon: "💬", group: "main" },
   { key: "mypage", label: "마이페이지", path: "pages/마이페이지/mypage.html", icon: "👤", group: "main" },
   { key: "admin-employee", label: "직원 관리", path: "pages/관리자 - 직원관리/admin-employee.html", icon: "👥", group: "admin" },
@@ -90,6 +91,13 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// 사진 에디터가 만든 리치 HTML(bodyHtml)에서 태그를 걷어내 검색 인덱스용 순수 텍스트만 뽑는다.
+function stripHtml(html) {
+  const div = document.createElement("div");
+  div.innerHTML = html || "";
+  return div.textContent || "";
+}
+
 function formatDate(date) {
   const d = date instanceof Date ? date : new Date(date);
   const pad = (n) => String(n).padStart(2, "0");
@@ -108,6 +116,83 @@ function showToast(message) {
   el.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2000);
+}
+
+/* ---------- 사진 첨부 에디터 (네이버 카페 글쓰기 스타일 공용) ---------- */
+/* 사진을 에디터 영역에 드래그하거나 붙여넣으면 그 자리에 삽입되고, 바로 밑에 캡션 한 줄이 함께 생긴다.
+   고장처치 매뉴얼의 [관련사진], 사례공유게시판의 글/댓글 본문에서 공용으로 사용한다. */
+
+function insertPhotoBlock(editor, dataUrl, captionText) {
+  const img = document.createElement("img");
+  img.src = dataUrl;
+  editor.appendChild(img);
+
+  const caption = document.createElement("div");
+  caption.className = "photo-editor-caption";
+  caption.contentEditable = "true";
+  caption.textContent = captionText || "";
+  editor.appendChild(caption);
+
+  caption.focus();
+}
+
+function handlePhotoFiles(editor, fileList) {
+  Array.from(fileList || []).forEach((file) => {
+    if (!file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => insertPhotoBlock(editor, reader.result, "");
+    reader.readAsDataURL(file);
+  });
+}
+
+function populatePhotoEditor(editor, photos) {
+  editor.innerHTML = "";
+  (photos || []).forEach((p) => insertPhotoBlock(editor, p.file, p.caption || ""));
+  editor.blur();
+}
+
+function collectPhotosFromEditor(editor) {
+  const photos = [];
+  editor.querySelectorAll("img").forEach((img) => {
+    let captionText = "";
+    const next = img.nextElementSibling;
+    if (next && next.classList.contains("photo-editor-caption")) {
+      captionText = next.textContent.trim();
+    }
+    photos.push({ file: img.getAttribute("src"), caption: captionText });
+  });
+  return photos;
+}
+
+// 사진추가 버튼/드래그앤드롭/붙여넣기를 에디터 한 인스턴스에 연결한다. addBtn/pickerInput은 없어도 된다(드래그·붙여넣기만 쓰는 경우).
+function wirePhotoEditor(editor, addBtn, pickerInput) {
+  if (addBtn && pickerInput) {
+    addBtn.addEventListener("click", () => pickerInput.click());
+    pickerInput.addEventListener("change", (e) => {
+      handlePhotoFiles(editor, e.target.files);
+      e.target.value = "";
+    });
+  }
+
+  editor.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    editor.classList.add("dragover");
+  });
+  editor.addEventListener("dragleave", () => editor.classList.remove("dragover"));
+  editor.addEventListener("drop", (e) => {
+    e.preventDefault();
+    editor.classList.remove("dragover");
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      handlePhotoFiles(editor, e.dataTransfer.files);
+    }
+  });
+  editor.addEventListener("paste", (e) => {
+    const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+    const imageItems = items.filter((it) => it.type.startsWith("image/"));
+    if (imageItems.length === 0) return;
+    e.preventDefault();
+    handlePhotoFiles(editor, imageItems.map((it) => it.getAsFile()));
+  });
 }
 
 /* ---------- 테마 (라이트/다크 전환) ---------- */
@@ -177,6 +262,14 @@ const SEARCH_SOURCES = [
     path: "pages/자유게시판/board.html",
     getTitle: (x) => x.title,
     getText: (x) => [x.title, x.content, x.author].join(" "),
+  },
+  {
+    key: "casePosts",
+    type: "사례공유",
+    icon: "🖼️",
+    path: "pages/사례공유게시판/case-share.html",
+    getTitle: (x) => x.title,
+    getText: (x) => [x.title, x.author, stripHtml(x.bodyHtml)].join(" "),
   },
   {
     key: "adminNotices",
