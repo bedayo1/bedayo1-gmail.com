@@ -265,8 +265,9 @@ function renderViewsLikesBadge(item) {
 /* ---------- 공지사항 구분 · 확인사인(개인별 NEW) ---------- */
 /* 공지사항 화면(notice.js)의 필터탭과 관리자 등록화면(admin-notice.js)의 구분 셀렉트가 공용으로 쓴다. */
 
-const NOTICE_TYPES = ["지시사항", "산업안전보건교육", "지시전달부", "알림", "관련규정"];
+const NOTICE_TYPES = ["공지사항", "지시사항", "산업안전보건교육", "지시전달부", "알림", "관련규정"];
 const NOTICE_TYPE_BADGE_CLASS = {
+  공지사항: "info",
   지시사항: "danger",
   산업안전보건교육: "info",
   지시전달부: "info",

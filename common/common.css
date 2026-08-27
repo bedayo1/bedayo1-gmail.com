@@ -1364,6 +1364,61 @@ body {
   justify-content: flex-end;
 }
 
+/* ---------- 확인현황 한눈에 보기 (공지·지시사항 관리) ---------- */
+
+.ack-overview-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.ack-overview-item:last-child {
+  border-bottom: none;
+}
+
+.ack-overview-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ack-overview-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.ack-overview-row-label {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  padding-top: 3px;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.chip.ok {
+  background: rgba(50, 212, 120, 0.15);
+  color: var(--color-success);
+}
+
+.chip.pending {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
 /* ---------- 조회수 · 좋아요 (매뉴얼/게시판 공용) ---------- */
 
 .views-likes-bar {

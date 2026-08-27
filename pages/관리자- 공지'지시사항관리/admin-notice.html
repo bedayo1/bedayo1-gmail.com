@@ -17,6 +17,12 @@
   <p class="page-desc">전 직원에게 공지되는 공지사항과 승무지시사항을 등록합니다.</p>
 
   <section class="card">
+    <h2 class="page-title" style="font-size:16px; margin-top:0;">📋 확인현황 한눈에 보기</h2>
+    <p class="page-desc" style="margin-top:-6px;">지금 노출 중인 공지마다 누가 확인했고 안 했는지 바로 보여줍니다.</p>
+    <div id="ack-overview"></div>
+  </section>
+
+  <section class="card">
     <div class="toolbar">
       <div></div>
       <button class="btn" id="btn-new">+ 등록</button>
@@ -96,6 +102,7 @@
     </div>
     <div class="wizard-body" id="ack-body"></div>
     <div class="modal-actions wizard-actions">
+      <button type="button" class="btn secondary" id="btn-ack-download">⬇ 서명부 다운로드</button>
       <button type="button" class="btn secondary" id="btn-ack-close2">닫기</button>
     </div>
   </div>

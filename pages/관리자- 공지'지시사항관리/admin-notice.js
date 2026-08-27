@@ -6,6 +6,124 @@ let adminNotices = loadData("adminNotices", [
 ]);
 saveData("adminNotices", adminNotices);
 
+/* ---------- 확인현황 한눈에 보기 ---------- */
+/* 노출 중인 공지마다 확인/미확인 인원을 이름 칩으로 바로 보여준다 (클릭해서 들어가야 하는 확인현황 모달과 별개로,
+   목록 진입 즉시 전체 현황을 한눈에 파악할 수 있게 하기 위함). */
+
+const ACK_OVERVIEW_CHIP_LIMIT = 20;
+const ACK_OVERVIEW_EMP_LIMIT = 15;
+let ackOverviewExpanded = false;
+
+function renderChipList(people, cls) {
+  if (people.length === 0) return `<span class="empty-state" style="padding:0;">-</span>`;
+  const shown = people.slice(0, ACK_OVERVIEW_CHIP_LIMIT);
+  const rest = people.length - shown.length;
+  return `
+    <div class="chip-list">
+      ${shown.map((p) => `<span class="chip ${cls}">${p.name}</span>`).join("")}
+      ${rest > 0 ? `<span class="chip ${cls}">+${rest}명</span>` : ""}
+    </div>`;
+}
+
+// 직원별로 "지금 노출 중인 공지 중 몇 건을 확인했는지"를 집계 — 특정 공지 하나가 아니라
+// 전체적으로 확인이 밀린 직원이 누구인지 한눈에 보기 위함. 확인율이 낮은 사람이 위로 오게 정렬한다.
+function buildEmployeeAckSummary(employees, visibleNotices) {
+  return employees
+    .map((e) => {
+      const ackedCount = visibleNotices.filter((n) => (n.ackedBy || []).some((a) => a.empId === e.empId)).length;
+      return { ...e, ackedCount, total: visibleNotices.length };
+    })
+    .sort((a, b) => a.ackedCount - b.ackedCount);
+}
+
+function renderAckOverview() {
+  const mount = document.getElementById("ack-overview");
+  const employees = loadData("employees", []);
+  const visible = adminNotices.filter((n) => isWithinNoticePeriod(n));
+
+  if (visible.length === 0) {
+    mount.innerHTML = `<div class="empty-state">지금 노출 중인 공지가 없습니다.</div>`;
+    return;
+  }
+
+  const totalSlots = visible.length * employees.length;
+  const totalAcked = visible.reduce((sum, n) => sum + (n.ackedBy || []).length, 0);
+  const overallRate = totalSlots ? Math.round((totalAcked / totalSlots) * 100) : 0;
+
+  const empSummary = buildEmployeeAckSummary(employees, visible);
+  const behind = empSummary.filter((e) => e.ackedCount < e.total);
+
+  const perNoticeHtml = visible
+    .map((n) => {
+      const ackedByIdSet = new Set((n.ackedBy || []).map((a) => a.empId));
+      const acked = (n.ackedBy || []).map((a) => ({ empId: a.empId, name: a.name }));
+      const unacked = employees.filter((e) => !ackedByIdSet.has(e.empId));
+      return `
+      <div class="ack-overview-item">
+        <div class="ack-overview-title">
+          <span class="badge ${NOTICE_TYPE_BADGE_CLASS[n.type] || "neutral"}">${n.type}</span>
+          ${n.title}
+        </div>
+        <div class="ack-overview-row">
+          <span class="ack-overview-row-label">✅ 확인 (${acked.length}/${employees.length})</span>
+          ${renderChipList(acked, "ok")}
+        </div>
+        <div class="ack-overview-row">
+          <span class="ack-overview-row-label">⏳ 미확인 (${unacked.length})</span>
+          ${renderChipList(unacked, "pending")}
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  mount.innerHTML = `
+    <div class="dashboard-grid" style="margin-bottom:16px;">
+      <div class="card stat-card">
+        <div class="stat-label">노출 중인 공지</div>
+        <div class="stat-value">${visible.length}건</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">전체 평균 확인율</div>
+        <div class="stat-value">${overallRate}%</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">한 건이라도 밀린 직원</div>
+        <div class="stat-value">${behind.length}명</div>
+      </div>
+    </div>
+    <h3 style="font-size:14px; margin:0 0 10px;">직원별 확인 현황 (확인율 낮은 순)</h3>
+    ${
+      behind.length
+        ? `<div class="weak-area-list" style="margin-bottom:10px;">
+            ${(ackOverviewExpanded ? behind : behind.slice(0, ACK_OVERVIEW_EMP_LIMIT))
+              .map(
+                (e) => `
+              <div class="weak-area-item">
+                <span class="weak-area-title">${e.name} (${e.empId})</span>
+                <span class="weak-area-rate">${e.ackedCount}/${e.total}건 확인</span>
+              </div>`
+              )
+              .join("")}
+          </div>
+          ${
+            behind.length > ACK_OVERVIEW_EMP_LIMIT
+              ? `<button type="button" class="btn secondary small" id="btn-ack-overview-toggle" style="margin-bottom:20px;">${
+                  ackOverviewExpanded ? "접기" : `+${behind.length - ACK_OVERVIEW_EMP_LIMIT}명 더 보기`
+                }</button>`
+              : ""
+          }`
+        : `<div class="empty-state" style="margin-bottom:20px;">전 직원이 모든 공지를 확인했습니다.</div>`
+    }
+    <h3 style="font-size:14px; margin:0 0 10px;">공지별 확인/미확인</h3>
+    ${perNoticeHtml}
+  `;
+
+  document.getElementById("btn-ack-overview-toggle")?.addEventListener("click", () => {
+    ackOverviewExpanded = !ackOverviewExpanded;
+    renderAckOverview();
+  });
+}
+
 /* ---------- CRUD ---------- */
 
 function getAllAdminNotices() {
@@ -41,6 +159,7 @@ const adminNoticePager = { page: 0, pageSize: 10 };
 const adminNoticeSearch = { field: "title", query: "" };
 
 function renderAdminNoticeList() {
+  renderAckOverview();
   const tbody = document.getElementById("admin-notice-tbody");
   const filtered = filterByTitleContent(adminNotices, adminNoticeSearch, (n) => n.title, (n) => n.content);
 
@@ -92,11 +211,34 @@ function renderAdminNoticeList() {
   renderPaginationOrAll("admin-notice-pager", adminNoticePager, filtered.length, renderAdminNoticeList, skipPaging);
 }
 
-/* ---------- 확인현황 (누가 이 공지사항을 확인했는지) ---------- */
+/* ---------- 확인현황 (누가 이 공지사항을 확인했는지 — 종이 서명부의 디지털 버전) ---------- */
+
+let currentAckId = null;
+
+// 실제 서명부(종이)처럼 사번·성명·확인일시(=서명)를 표로 정리해 파일로 남긴다.
+// 미확인자는 확인일시 칸을 비워둬서, 누가 아직 서명(확인) 전인지 그대로 드러나게 한다.
+function buildSignatureSheetHtml(item, acked, unacked) {
+  const rows = [
+    ...acked.map((a) => ({ empId: a.empId, name: a.name, signedAt: `${formatDate(a.ackedAt)} 확인` })),
+    ...unacked.map((e) => ({ empId: e.empId, name: e.name, signedAt: "" })),
+  ];
+  return `
+    <div class="meta">${item.type} · 생성일 ${formatDate(new Date())} · 확인 ${acked.length}/${rows.length}명</div>
+    <p>${(item.content || "").replace(/\n/g, "<br>")}</p>
+    ${renderPhotoGalleryHtml(item.photos)}
+    <table class="trend-table">
+      <thead><tr><th>사번</th><th>성명</th><th>확인(서명)</th></tr></thead>
+      <tbody>
+        ${rows.map((r) => `<tr><td>${r.empId}</td><td>${r.name}</td><td>${r.signedAt}</td></tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+}
 
 function openAckStatus(id) {
   const item = getAdminNotice(id);
   if (!item) return;
+  currentAckId = id;
 
   const employees = loadData("employees", []);
   const ackedByIdSet = new Set((item.ackedBy || []).map((a) => a.empId));
@@ -194,6 +336,16 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-ack-close2").addEventListener("click", closeAckStatus);
   document.getElementById("ack-backdrop").addEventListener("click", (e) => {
     if (e.target.id === "ack-backdrop") closeAckStatus();
+  });
+
+  document.getElementById("btn-ack-download").addEventListener("click", () => {
+    const item = getAdminNotice(currentAckId);
+    if (!item) return;
+    const employees = loadData("employees", []);
+    const ackedByIdSet = new Set((item.ackedBy || []).map((a) => a.empId));
+    const acked = [...(item.ackedBy || [])].sort((a, b) => (a.ackedAt < b.ackedAt ? 1 : -1));
+    const unacked = employees.filter((e) => !ackedByIdSet.has(e.empId));
+    downloadAsHtml(`서명부_${toSafeFilename(item.title)}`, `${item.title} - 확인 서명부`, buildSignatureSheetHtml(item, acked, unacked));
   });
 
   document.getElementById("admin-notice-form").addEventListener("submit", (e) => {
