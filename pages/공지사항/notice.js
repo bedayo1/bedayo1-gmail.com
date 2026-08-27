@@ -137,6 +137,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderNoticeList();
   onViewportChange(renderNoticeList);
 
+  // 알림함 등에서 ?open= 으로 넘어온 경우 해당 공지 상세를 바로 연다.
+  const openId = new URLSearchParams(location.search).get("open");
+  if (openId && getNotice(openId)) openDetail(openId);
+
   document.getElementById("btn-detail-close").addEventListener("click", closeDetail);
   document.getElementById("btn-detail-close2").addEventListener("click", closeDetail);
   document.getElementById("detail-backdrop").addEventListener("click", (e) => {

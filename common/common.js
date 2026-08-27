@@ -1182,6 +1182,7 @@ function buildNotifications() {
         id: `notice-${n.id}`,
         icon: n.type === "지시사항" ? "📢" : "📋",
         text: `[${n.type}] ${n.title}`,
+        href: `${base}pages/공지사항/notice.html?open=${n.id}`,
         kind: "notice",
         noticeId: n.id,
       });
@@ -1206,7 +1207,7 @@ function buildNotifications() {
           id: `comment-${p.id}`,
           icon: "💬",
           text: `"${p.title}"에 새 댓글이 ${count - seen}개 달렸습니다.`,
-          href: `${base}pages/자유게시판/board.html`,
+          href: `${base}pages/자유게시판/board.html?open=${p.id}`,
           kind: "comment",
           postId: p.id,
           count,
@@ -1395,11 +1396,10 @@ function renderNotifList() {
 
   results.querySelectorAll(".notif-item").forEach((el) => {
     el.addEventListener("click", () => {
+      // href가 있으면 그 알림이 가리키는 게시물/공지로 그대로 이동한다 (마킹만 하고 목록을 다시 그리면
+      // 이동 중인 링크 엘리먼트가 DOM에서 사라져 이동이 씹힐 수 있어 재렌더링은 하지 않는다).
       const notif = notifs.find((n) => n.id === el.dataset.notifId);
-      if (notif && notif.kind) {
-        markNotificationRead(notif);
-        renderNotifList();
-      }
+      if (notif && notif.kind) markNotificationRead(notif);
     });
   });
 }

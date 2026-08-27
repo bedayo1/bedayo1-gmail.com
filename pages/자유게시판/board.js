@@ -203,6 +203,10 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPostList();
   onViewportChange(renderPostList);
 
+  // 알림함 등에서 ?open= 으로 넘어온 경우 해당 게시글 상세를 바로 연다.
+  const openId = new URLSearchParams(location.search).get("open");
+  if (openId && getPost(openId)) openDetail(openId);
+
   document.getElementById("btn-new").addEventListener("click", () => openModal(null));
   document.getElementById("btn-cancel").addEventListener("click", closeModal);
   document.getElementById("modal-backdrop").addEventListener("click", (e) => {
