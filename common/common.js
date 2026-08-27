@@ -108,6 +108,10 @@ function seedCoreData() {
   if (typeof ACCIDENT_SEED !== "undefined" && loadData("accidents", []).length === 0) {
     saveData("accidents", ACCIDENT_SEED.map((a) => ({ id: uid(), ...a })));
   }
+  // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.
+  if (typeof EMPLOYEE_SEED !== "undefined" && loadData("employees", []).length === 0) {
+    saveData("employees", EMPLOYEE_SEED.map((e) => ({ id: uid(), ...e })));
+  }
 }
 seedCoreData();
 
