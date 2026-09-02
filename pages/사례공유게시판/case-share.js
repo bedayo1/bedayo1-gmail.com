@@ -53,7 +53,13 @@ function addCaseComment(postId, author, bodyHtml) {
   const post = getCasePost(postId);
   if (!post) return;
   if (!post.comments) post.comments = [];
-  post.comments.push({ id: uid(), author, bodyHtml, date: formatDate(new Date()) });
+  post.comments.push({
+    id: uid(),
+    author,
+    bodyHtml,
+    date: formatDate(new Date()),
+    authorEmpId: (profile && profile.empId) || null,
+  });
   saveData("casePosts", casePosts);
 }
 
@@ -96,8 +102,12 @@ function renderCaseList() {
         <td>${p.author}</td>
         <td class="mobile-hide">${p.date}</td>
         <td class="actions">
-          <button class="btn secondary small" data-action="edit" data-id="${p.id}">수정</button>
-          <button class="btn danger small" data-action="delete" data-id="${p.id}">삭제</button>
+          ${
+            canModifyPost(p, profile)
+              ? `<button class="btn secondary small" data-action="edit" data-id="${p.id}">수정</button>
+                 <button class="btn danger small" data-action="delete" data-id="${p.id}">삭제</button>`
+              : ""
+          }
         </td>
       </tr>`
     )
@@ -133,7 +143,7 @@ function renderCaseCommentList(post) {
           <span class="comment-author">${c.author}</span>
           <span>
             <span class="comment-date">${c.date}</span>
-            <button type="button" class="comment-del" data-id="${c.id}">삭제</button>
+            ${canModifyPost(c, profile) ? `<button type="button" class="comment-del" data-id="${c.id}">삭제</button>` : ""}
           </span>
         </div>
         <div class="comment-content">${c.bodyHtml}</div>
@@ -173,7 +183,9 @@ function openDetail(id) {
   document.getElementById("detail-title").textContent = item.title;
   document.getElementById("detail-meta").textContent = `${item.author} · ${item.date}`;
   document.getElementById("detail-content").innerHTML = item.bodyHtml || "";
-  document.getElementById("c-author").value = (profile && profile.name) || "";
+  const commentAuthorInput = document.getElementById("c-author");
+  commentAuthorInput.value = (profile && profile.name) || "";
+  commentAuthorInput.readOnly = !!profile;
   document.getElementById("c-editor").innerHTML = "";
   renderCaseLikesBar(item);
   renderCaseCommentList(item);
@@ -194,9 +206,12 @@ function openModal(id) {
   const title = document.getElementById("modal-title");
   const item = id ? getCasePost(id) : null;
 
+  const authorInput = document.getElementById("f-author");
   document.getElementById("f-id").value = id || "";
   document.getElementById("f-title").value = item ? item.title : "";
-  document.getElementById("f-author").value = item ? item.author : (profile && profile.name) || "";
+  authorInput.value = item ? item.author : (profile && profile.name) || "";
+  // 글쓴이 이름은 로그인한 본인 것으로 고정 — 다른 사람 이름으로 작성하거나 작성자를 바꾸는 걸 막는다.
+  authorInput.readOnly = !!item || !!profile;
   document.getElementById("f-photo-picker").value = "";
   document.getElementById("editor").innerHTML = item ? item.bodyHtml || "" : "";
   title.textContent = item ? "사례 수정" : "사례 작성";
@@ -282,6 +297,8 @@ document.addEventListener("DOMContentLoaded", () => {
       author: document.getElementById("f-author").value.trim(),
       bodyHtml: document.getElementById("editor").innerHTML.trim(),
     };
+    // 새 글일 때만 작성자를 로그인한 사람으로 고정한다 (수정 시에는 원래 작성자 정보를 그대로 유지).
+    if (!id) data.authorEmpId = (profile && profile.empId) || null;
 
     if (id) {
       updateCasePost(id, data);

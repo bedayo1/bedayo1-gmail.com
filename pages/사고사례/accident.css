@@ -1,7 +1,7 @@
 /* accident.html 전용 스타일 (사고사례 페이지에서만 사용) */
 
 #accident-tbody td.title-cell a {
-  color: var(--color-primary);
+  color: var(--color-link-text);
   cursor: pointer;
 }
 
@@ -96,7 +96,7 @@
 
 .bulletin-header .bulletin-tag {
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   flex-shrink: 0;
 }
 

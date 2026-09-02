@@ -98,20 +98,25 @@ function uid() {
    바로 데이터를 읽기 때문에, 아무도 그 관리 페이지를 연 적이 없으면 일일안전교육 문제가 0개로 뜨는 등의
    문제가 있었다. 시드 데이터 자체는 common.js보다 먼저 로드되는 data-*.js 공용 파일에 있고,
    여기서는 어떤 페이지로 처음 들어오든 한 번만 채워지도록 보장만 한다. */
+// "한 번도 안 채워진 것"과 "다 지워서 0개인 것"을 구분하기 위한 표시.
+// (컬렉션 배열의 length===0 만 보고 판단하면, 사용자가 전부 삭제한 경우에도 다시 채워 넣는 버그가 생긴다 —
+//  예: 이례상황 매뉴얼은 시드가 2개뿐이라 둘 다 지우면 새로고침할 때마다 되살아났었다.)
+function seedOnceIfEmpty(key, seedArray) {
+  const flags = loadData("seedFlags", {});
+  if (flags[key]) return;
+  if (loadData(key, []).length === 0) {
+    saveData(key, seedArray.map((x) => ({ id: uid(), ...x })));
+  }
+  flags[key] = true;
+  saveData("seedFlags", flags);
+}
+
 function seedCoreData() {
-  if (typeof MALFUNCTION_SEED !== "undefined" && loadData("malfunctions", []).length === 0) {
-    saveData("malfunctions", MALFUNCTION_SEED.map((m) => ({ id: uid(), ...m })));
-  }
-  if (typeof EMERGENCY_SEED !== "undefined" && loadData("emergencies", []).length === 0) {
-    saveData("emergencies", EMERGENCY_SEED.map((e) => ({ id: uid(), ...e })));
-  }
-  if (typeof ACCIDENT_SEED !== "undefined" && loadData("accidents", []).length === 0) {
-    saveData("accidents", ACCIDENT_SEED.map((a) => ({ id: uid(), ...a })));
-  }
+  if (typeof MALFUNCTION_SEED !== "undefined") seedOnceIfEmpty("malfunctions", MALFUNCTION_SEED);
+  if (typeof EMERGENCY_SEED !== "undefined") seedOnceIfEmpty("emergencies", EMERGENCY_SEED);
+  if (typeof ACCIDENT_SEED !== "undefined") seedOnceIfEmpty("accidents", ACCIDENT_SEED);
   // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.
-  if (typeof EMPLOYEE_SEED !== "undefined" && loadData("employees", []).length === 0) {
-    saveData("employees", EMPLOYEE_SEED.map((e) => ({ id: uid(), ...e })));
-  }
+  if (typeof EMPLOYEE_SEED !== "undefined") seedOnceIfEmpty("employees", EMPLOYEE_SEED);
 }
 seedCoreData();
 
@@ -231,6 +236,17 @@ function currentUserKey() {
 
 function recordView(item) {
   item.views = (item.views || 0) + 1;
+}
+
+/* ---------- 글/댓글 작성자 본인 여부 (자유게시판·사례공유게시판 공용) ---------- */
+/* 실제 카페처럼 "내 글/댓글만 수정·삭제 가능"을 판단한다. 관리자 세션은 항상 허용(운영 목적).
+   authorEmpId가 없는 옛날 글(작성 당시 로그인 없이 저장된 데모 데이터 등)은 이름으로 대신 비교한다. */
+function canModifyPost(item, profile) {
+  const session = loadData("session", null);
+  if (session && session.type === "admin") return true;
+  if (!profile) return false;
+  if (item.authorEmpId) return item.authorEmpId === profile.empId;
+  return !!item.author && item.author === profile.name;
 }
 
 // 좋아요를 누른 상태로 토글하고, 토글 후 "내가 좋아요를 누른 상태인지"를 반환한다.

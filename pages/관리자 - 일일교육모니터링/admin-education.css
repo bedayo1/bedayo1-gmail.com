@@ -18,7 +18,7 @@
 .edu-detail-summary .mini-stat .mini-num {
   font-size: 22px;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-family: var(--font-mono), monospace;
 }
 

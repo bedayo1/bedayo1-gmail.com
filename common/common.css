@@ -8,6 +8,8 @@
 :root {
   --color-primary: #00e5ff;       /* 강조/데이터 (Cian/Neon) */
   --color-primary-text: #052226;  /* 밝은 강조색 위에 올라가는 어두운 글자색 */
+  --color-link-text: var(--color-primary); /* 게시글 제목 등 목록 링크 글자색 — 라이트 모드에서는 검정 계열로 덮어씀(가독성) */
+  --color-accent-text: var(--color-primary); /* 로고·배지·통계 숫자 등 강조 글자색 — 라이트 모드에서는 눈부시지 않은 톤으로 덮어씀 */
   --color-danger: #ff453a;        /* 경고/위험 */
   --color-danger-bg: #3a1c1c;
   --color-success: #32d478;       /* 정상/완료 (Verde Lima 계열) */
@@ -37,6 +39,8 @@
   --color-text-muted: #64707d;
   --color-danger-bg: #fdecea;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --color-link-text: var(--color-text);
+  --color-accent-text: #0a7d90; /* 밝은 배경에서도 눈부시지 않은 톤 다운된 시안 */
 }
 
 * {
@@ -104,7 +108,7 @@ body {
   font-weight: 700;
   font-size: 18px;
   white-space: nowrap;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 .site-header .brand .sub {
@@ -326,7 +330,7 @@ body {
   display: block;
   margin-top: 10px;
   font-size: 12px;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   text-decoration: none;
   text-align: right;
 }
@@ -684,9 +688,9 @@ body {
 }
 
 .badge.ok { background: rgba(50, 212, 120, 0.15); color: var(--color-success); }
-.badge.info { background: rgba(0, 229, 255, 0.15); color: var(--color-primary); }
+.badge.info { background: rgba(0, 229, 255, 0.15); color: var(--color-accent-text); }
 .badge.neutral { background: var(--color-surface-hover); color: var(--color-text-muted); }
-.badge.warn { background: rgba(0, 229, 255, 0.15); color: var(--color-primary); }
+.badge.warn { background: rgba(0, 229, 255, 0.15); color: var(--color-accent-text); }
 .badge.danger { background: var(--color-danger-bg); color: var(--color-danger); }
 
 .form-row {
@@ -710,6 +714,12 @@ body {
   font-size: 14px;
   font-family: inherit;
   color: var(--color-text);
+}
+
+.form-row input[readonly] {
+  background: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
 }
 
 .modal-backdrop {
@@ -786,7 +796,7 @@ body {
 .stat-card .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 /* ---------- 목록 검색 (common.js renderListSearch 가 사용) ---------- */
@@ -956,7 +966,7 @@ body {
 
 .quiz-question-card .quiz-q-index {
   font-size: 12px;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -1071,7 +1081,7 @@ body {
 .vt-stat-accuracy {
   font-weight: 700;
   font-family: var(--font-mono), monospace;
-  color: var(--color-primary);
+  color: var(--color-accent-text);
 }
 
 .vt-stat-detail {
@@ -1308,6 +1318,13 @@ body {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+}
+
+.comment-form #c-author[readonly],
+.comment-form-rich #c-author[readonly] {
+  background: var(--color-surface-hover);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
 }
 
 .comment-form #c-author {

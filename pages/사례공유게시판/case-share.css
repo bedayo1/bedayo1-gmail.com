@@ -1,7 +1,7 @@
 /* case-share.html 전용 스타일 (사례공유게시판 페이지에서만 사용) */
 
 #case-tbody td.title-cell a {
-  color: var(--color-primary);
+  color: var(--color-link-text);
   cursor: pointer;
 }
 
