@@ -115,7 +115,10 @@ function openDetail(id) {
   document.getElementById("detail-title").textContent = item.title;
   document.getElementById("detail-meta").textContent = item.type;
   document.getElementById("detail-content").innerHTML =
-    (item.content ? `<div>${item.content}</div>` : "") + renderPhotoGalleryHtml(item.photos);
+    (item.content ? `<div>${item.content}</div>` : "") +
+    renderPhotoGalleryHtml(item.photos) +
+    renderFileAttachmentsHtml(item.files);
+  wireFileAttachmentDownloads(document.getElementById("detail-content"), item.files);
   renderNoticeLikesBar(item);
   renderAckButton(item);
 

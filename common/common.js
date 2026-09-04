@@ -111,12 +111,58 @@ function seedOnceIfEmpty(key, seedArray) {
   saveData("seedFlags", flags);
 }
 
+// seedOnceIfEmpty는 "최초 1회"만 시딩하므로, 이미 시딩이 끝난 브라우저(seedFlags[key]=true)에서는
+// 나중에 코드에 새로 추가된 시드 항목(예: 새 공지사항 hwp)이 영원히 반영되지 않는다.
+// title을 기준으로 "아직 한 번도 들어온 적 없는 항목"만 골라 추가해, 새 시드 항목은 기존 사용자에게도
+// 자동으로 나타나게 하면서 사용자가 실제로 삭제한 항목은 다시 살아나지 않게 한다.
+function importNewSeedItemsByTitle(key, seedArray) {
+  const importedKey = key + "_importedTitles";
+  const imported = loadData(importedKey, []);
+  const current = loadData(key, []);
+  let changed = false;
+  seedArray.forEach((seedItem) => {
+    if (imported.includes(seedItem.title)) return;
+    imported.push(seedItem.title);
+    if (!current.some((c) => c.title === seedItem.title)) {
+      current.push({ id: uid(), ...seedItem });
+      changed = true;
+    }
+  });
+  saveData(importedKey, imported);
+  if (changed) saveData(key, current);
+}
+
+// NOTICE_SEED에 나중에 pdf 등 첨부파일이 추가/변경돼도(제목은 그대로), 이미 들어와있던 공지의
+// files 필드가 코드 상의 최신 시드와 다르면 시드 쪽으로 맞춰준다 (관리자가 직접 수정한 게 아니라
+// 코드에 박힌 시드 데이터이므로 덮어써도 안전하다).
+function syncSeedFilesByTitle(key, seedArray) {
+  const current = loadData(key, []);
+  let changed = false;
+  seedArray.forEach((seedItem) => {
+    if (!seedItem.files) return;
+    const target = current.find((c) => c.title === seedItem.title);
+    if (!target) return;
+    const currentUrls = (target.files || []).map((f) => f.url).join("|");
+    const seedUrls = seedItem.files.map((f) => f.url).join("|");
+    if (currentUrls !== seedUrls) {
+      target.files = seedItem.files;
+      changed = true;
+    }
+  });
+  if (changed) saveData(key, current);
+}
+
 function seedCoreData() {
   if (typeof MALFUNCTION_SEED !== "undefined") seedOnceIfEmpty("malfunctions", MALFUNCTION_SEED);
   if (typeof EMERGENCY_SEED !== "undefined") seedOnceIfEmpty("emergencies", EMERGENCY_SEED);
   if (typeof ACCIDENT_SEED !== "undefined") seedOnceIfEmpty("accidents", ACCIDENT_SEED);
   // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.
   if (typeof EMPLOYEE_SEED !== "undefined") seedOnceIfEmpty("employees", EMPLOYEE_SEED);
+  if (typeof NOTICE_SEED !== "undefined") {
+    seedOnceIfEmpty("adminNotices", NOTICE_SEED);
+    importNewSeedItemsByTitle("adminNotices", NOTICE_SEED);
+    syncSeedFilesByTitle("adminNotices", NOTICE_SEED);
+  }
 }
 seedCoreData();
 
@@ -327,6 +373,51 @@ function renderPhotoGalleryHtml(photos) {
         )
         .join("")}
     </div>`;
+}
+
+// pdf는 브라우저가 기본적으로 화면에 그대로 띄워줄 수 있지만, hwp 등 다른 포맷은 브라우저가
+// 아예 읽지 못해 다운로드로만 제공할 수 있다 (한글 프로그램 설치 여부와 무관한 브라우저 자체의 한계).
+function isInlinePreviewableFile(f) {
+  return /\.pdf($|\?)/i.test(f.name || f.url || "");
+}
+
+// 원본 파일 첨부(hwp/pdf 등, files=[{name, url}])를 보여준다. pdf는 화면에 바로 띄우고, 그 외 포맷은
+// 다운로드 버튼만 제공한다. url은 실제 정적 파일 경로("./data/파일.pdf")거나, 화면에서 직접 업로드한
+// 경우 base64 data URL일 수 있다 — 둘 다 downloadOriginalFile/iframe에 그대로 쓸 수 있다.
+function renderFileAttachmentsHtml(files) {
+  if (!files || files.length === 0) return "";
+  return `
+    <div class="file-attach-download-list">
+      ${files
+        .map((f, i) => {
+          const previewable = isInlinePreviewableFile(f);
+          return `
+        <div class="file-attach-download-item">
+          <div class="file-attach-download-row">
+            <span>📎</span>
+            <span class="file-attach-name">${f.name}</span>
+            <button type="button" class="btn secondary small" data-file-download-index="${i}">⬇ 다운로드</button>
+          </div>
+          ${
+            previewable
+              ? `<div class="file-attach-pdf-preview"><iframe src="${f.url}#toolbar=0&navpanes=0&statusbar=0" class="pdf-preview-frame"></iframe></div>`
+              : `<p class="file-attach-preview-note">이 파일 형식은 브라우저 화면에 바로 띄울 수 없어요. 위 "다운로드" 버튼으로 받아서 열어주세요.</p>`
+          }
+        </div>`;
+        })
+        .join("")}
+    </div>`;
+}
+
+// renderFileAttachmentsHtml로 그린 다운로드 버튼들에 클릭 이벤트를 연결한다.
+function wireFileAttachmentDownloads(container, files) {
+  if (!files) return;
+  container.querySelectorAll("[data-file-download-index]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const f = files[Number(btn.dataset.fileDownloadIndex)];
+      if (f) downloadOriginalFile(f.url, f.name);
+    });
+  });
 }
 
 // 사이드바 NEW 뱃지, 목록 필터 등에서 쓰는 "이 직원이 아직 확인 안 한, 지금 노출 중인 공지" 목록.

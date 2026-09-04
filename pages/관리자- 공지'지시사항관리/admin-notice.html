@@ -77,6 +77,14 @@
           <div id="editor" class="photo-editor" contenteditable="true"></div>
         </div>
         <div class="form-row">
+          <label for="f-file-picker">[원본 파일 첨부] — hwp·hwpx·pdf 등 원본 문서를 그대로 첨부합니다. 직원이 상세보기에서 원본 그대로 다운로드할 수 있어요. (사진처럼 화면에 바로 보이지는 않고, 다운로드 버튼으로 제공됩니다)</label>
+          <div class="photo-editor-toolbar">
+            <button type="button" class="btn secondary small" id="btn-add-file">+ 파일 추가</button>
+            <input type="file" id="f-file-picker" multiple style="display:none">
+          </div>
+          <div id="file-attach-list" class="file-attach-list"></div>
+        </div>
+        <div class="form-row">
           <label for="f-start-date">노출 시작일 (선택 — 비워두면 즉시부터, 지시사항이 홈 화면 출근 절차에 노출되는 기간)</label>
           <input type="date" id="f-start-date">
         </div>
@@ -108,6 +116,7 @@
   </div>
 </div>
 
+<script src="../../common/data-notices.js"></script>
 <script src="../../common/data-employees.js"></script>
 <script src="../../common/data-malfunctions.js"></script>
 <script src="../../common/data-emergencies.js"></script>
