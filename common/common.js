@@ -139,13 +139,20 @@ function syncSeedFilesByTitle(key, seedArray) {
   const current = loadData(key, []);
   let changed = false;
   seedArray.forEach((seedItem) => {
-    if (!seedItem.files) return;
     const target = current.find((c) => c.title === seedItem.title);
     if (!target) return;
-    const currentUrls = (target.files || []).map((f) => f.url).join("|");
-    const seedUrls = seedItem.files.map((f) => f.url).join("|");
-    if (currentUrls !== seedUrls) {
-      target.files = seedItem.files;
+    if (seedItem.files) {
+      const currentUrls = (target.files || []).map((f) => f.url).join("|");
+      const seedUrls = seedItem.files.map((f) => f.url).join("|");
+      if (currentUrls !== seedUrls) {
+        target.files = seedItem.files;
+        changed = true;
+      }
+    }
+    // 카테고리(type)도 시드가 최신 기준 — 관리자가 "게시물 이동" 기능으로 직접 옮긴 게 아니라
+    // 코드 상의 시드 데이터를 고친 경우이므로 시드 값으로 맞춰준다.
+    if (seedItem.type && target.type !== seedItem.type && !target.typeMovedByAdmin) {
+      target.type = seedItem.type;
       changed = true;
     }
   });

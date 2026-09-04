@@ -147,6 +147,16 @@ function updateAdminNotice(id, data) {
   renderAdminNoticeList();
 }
 
+// 목록에서 구분(카테고리)만 바로 바꿔 다른 필터탭으로 옮긴다 (전체 수정 화면을 열지 않아도 됨).
+// typeMovedByAdmin을 표시해둬서, 코드 상의 시드 데이터가 나중에 또 바뀌어도(예: 새 파일 추가)
+// 관리자가 직접 옮겨놓은 구분을 시드 값으로 도로 덮어쓰지 않게 한다.
+function moveNoticeType(id, newType) {
+  adminNotices = adminNotices.map((n) => (n.id === id ? { ...n, type: newType, typeMovedByAdmin: true } : n));
+  saveData("adminNotices", adminNotices);
+  renderAdminNoticeList();
+  showToast(`"${newType}"(으)로 이동되었습니다.`);
+}
+
 function deleteAdminNotice(id) {
   if (!confirm("삭제하시겠습니까?")) return;
   adminNotices = adminNotices.filter((n) => n.id !== id);
@@ -189,7 +199,11 @@ function renderAdminNoticeList() {
           ${n.title}
           ${!isWithinNoticePeriod(n) ? `<span class="badge neutral">기간외</span>` : ""}
         </td>
-        <td><span class="badge ${NOTICE_TYPE_BADGE_CLASS[n.type] || "neutral"}">${n.type}</span></td>
+        <td>
+          <select class="notice-type-move" data-id="${n.id}" title="다른 구분(필터탭)으로 이동">
+            ${NOTICE_TYPES.map((t) => `<option value="${t}" ${t === n.type ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+        </td>
         <td class="actions">
           <button class="btn secondary small" data-action="ack" data-id="${n.id}">확인현황 (${ackCount}/${totalEmployees})</button>
           <button class="btn secondary small" data-action="edit" data-id="${n.id}">수정</button>
@@ -199,6 +213,9 @@ function renderAdminNoticeList() {
     })
     .join("");
 
+  tbody.querySelectorAll(".notice-type-move").forEach((sel) => {
+    sel.addEventListener("change", () => moveNoticeType(sel.dataset.id, sel.value));
+  });
   tbody.querySelectorAll("[data-action='edit']").forEach((btn) => {
     btn.addEventListener("click", () => openModal(btn.dataset.id));
   });
@@ -413,6 +430,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const data = {
       title: document.getElementById("f-title").value.trim(),
       type: document.getElementById("f-type").value,
+      typeMovedByAdmin: true,
       content,
       photos,
       files: pendingFiles,
