@@ -1,9 +1,10 @@
 /* admin-notice.html 전용 데이터 & 로직 */
 
-let adminNotices = loadData("adminNotices", [
-  { id: uid(), title: "혹서기 서행운전 안내", type: "알림", content: "혹서기 레일 온도 상승에 따른 서행구간을 반드시 준수 바랍니다." },
-  { id: uid(), title: "금일 승무 전 음주측정 필수", type: "지시사항", content: "승무 전 전원 음주측정 후 출무하시기 바랍니다." },
-]);
+// NOTICE_SEED는 common/data-notices.js(공용 시드 데이터 파일, html에서 common.js보다 먼저 로드됨)에 정의되어 있다.
+let adminNotices = loadData(
+  "adminNotices",
+  NOTICE_SEED.map((n) => ({ id: uid(), ...n }))
+);
 saveData("adminNotices", adminNotices);
 
 /* ---------- 확인현황 한눈에 보기 ---------- */
@@ -226,6 +227,7 @@ function buildSignatureSheetHtml(item, acked, unacked) {
     <div class="meta">${item.type} · 생성일 ${formatDate(new Date())} · 확인 ${acked.length}/${rows.length}명</div>
     <p>${(item.content || "").replace(/\n/g, "<br>")}</p>
     ${renderPhotoGalleryHtml(item.photos)}
+    ${item.files && item.files.length ? `<p>첨부파일: ${item.files.map((f) => f.name).join(", ")}</p>` : ""}
     <table class="trend-table">
       <thead><tr><th>사번</th><th>성명</th><th>확인(서명)</th></tr></thead>
       <tbody>
@@ -285,6 +287,44 @@ function closeAckStatus() {
   document.getElementById("ack-backdrop").classList.remove("open");
 }
 
+/* ---------- 원본 파일 첨부 (hwp/pdf 등, 사진 에디터와 별개) ---------- */
+/* 화면에서 고른 파일을 base64로 읽어 등록 전까지 메모리에 들고 있다가, 저장할 때 공지 데이터에 담는다.
+   수정 화면을 열면 기존 첨부가 이 배열에 먼저 채워지고, 여기서 빼거나 새로 추가할 수 있다. */
+
+let pendingFiles = [];
+
+function renderPendingFilesList() {
+  const mount = document.getElementById("file-attach-list");
+  mount.innerHTML = pendingFiles
+    .map(
+      (f, i) => `
+      <div class="file-attach-item">
+        <span>📎</span>
+        <span class="file-attach-name">${f.name}</span>
+        <button type="button" class="file-attach-remove" data-remove-index="${i}">✕ 제거</button>
+      </div>`
+    )
+    .join("");
+
+  mount.querySelectorAll("[data-remove-index]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pendingFiles.splice(Number(btn.dataset.removeIndex), 1);
+      renderPendingFilesList();
+    });
+  });
+}
+
+function handleAttachFiles(fileList) {
+  Array.from(fileList || []).forEach((file) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingFiles.push({ name: file.name, url: reader.result });
+      renderPendingFilesList();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ---------- 모달 (등록/수정 공용 폼) ---------- */
 
 function openModal(id) {
@@ -298,6 +338,9 @@ function openModal(id) {
   document.getElementById("f-content").value = item ? item.content || "" : "";
   document.getElementById("f-photo-picker").value = "";
   populatePhotoEditor(document.getElementById("editor"), item ? item.photos : []);
+  document.getElementById("f-file-picker").value = "";
+  pendingFiles = item ? [...(item.files || [])] : [];
+  renderPendingFilesList();
   document.getElementById("f-start-date").value = item ? item.startDate || "" : "";
   document.getElementById("f-end-date").value = item ? item.endDate || "" : "";
   title.textContent = item ? "수정" : "등록";
@@ -332,6 +375,14 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("f-photo-picker")
   );
 
+  document.getElementById("btn-add-file").addEventListener("click", () => {
+    document.getElementById("f-file-picker").click();
+  });
+  document.getElementById("f-file-picker").addEventListener("change", (e) => {
+    handleAttachFiles(e.target.files);
+    e.target.value = "";
+  });
+
   document.getElementById("btn-ack-close").addEventListener("click", closeAckStatus);
   document.getElementById("btn-ack-close2").addEventListener("click", closeAckStatus);
   document.getElementById("ack-backdrop").addEventListener("click", (e) => {
@@ -354,8 +405,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const content = document.getElementById("f-content").value.trim();
     const photos = collectPhotosFromEditor(document.getElementById("editor"));
 
-    if (!content && photos.length === 0) {
-      showToast("내용을 입력하거나 문서 사진을 첨부해주세요.");
+    if (!content && photos.length === 0 && pendingFiles.length === 0) {
+      showToast("내용을 입력하거나 문서 사진·원본 파일을 첨부해주세요.");
       return;
     }
 
@@ -364,6 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
       type: document.getElementById("f-type").value,
       content,
       photos,
+      files: pendingFiles,
       startDate: document.getElementById("f-start-date").value,
       endDate: document.getElementById("f-end-date").value,
     };
