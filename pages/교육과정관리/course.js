@@ -4,7 +4,6 @@
 let courses = loadData("courses", [
   { id: uid(), name: "철도안전법 기본과정", target: "신입 기관사", hours: 16, status: "planned" },
   { id: uid(), name: "비상상황 대응 실습", target: "전 기관사", hours: 8, status: "ongoing" },
-  { id: uid(), name: "고속철도 운전취급 갱신교육", target: "고속철도 기관사", hours: 24, status: "done" },
 ]);
 saveData("courses", courses); // 최초 로드시 시드 데이터를 즉시 영속화해 다른 페이지(index.js)에서도 바로 조회 가능
 
