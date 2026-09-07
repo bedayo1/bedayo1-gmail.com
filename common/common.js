@@ -715,12 +715,42 @@ function buildSearchIndex() {
   return index;
 }
 
+// 현장에서 흔히 쓰는 줄임말·속어와 정식 매뉴얼 용어가 달라서 그대로 검색하면 못 찾는 경우가 많다.
+// 검색어에 이 사전의 표제어가 포함돼 있으면, 연결된 동의어들도 함께 검색 대상에 추가한다 (양방향 매칭).
+const SEARCH_SYNONYMS = {
+  판타: ["팬터그래프"],
+  팬터그래프: ["판타"],
+  출입문: ["도어", "문"],
+  도어: ["출입문"],
+  제동: ["브레이크"],
+  브레이크: ["제동"],
+  축전지: ["배터리", "밧데리"],
+  기동: ["시동"],
+  시동: ["기동"],
+  신호: ["시그널"],
+  탈선: ["선로이탈"],
+  관제: ["cts", "관제실"],
+};
+
+// SEARCH_SYNONYMS는 한쪽 방향으로만 등록해도 된다 — 표제어→동의어뿐 아니라
+// "동의어로만 등록된 단어"로 검색해도 표제어와 나머지 동의어들을 모두 찾도록 양방향으로 확장한다.
+function expandSearchTerms(terms) {
+  const expanded = new Set(terms);
+  terms.forEach((t) => {
+    Object.keys(SEARCH_SYNONYMS).forEach((key) => {
+      const group = [key, ...SEARCH_SYNONYMS[key]];
+      if (group.includes(t)) group.forEach((w) => expanded.add(w.toLowerCase()));
+    });
+  });
+  return [...expanded];
+}
+
 // query(검색어)와 관련도 높은 순으로 정렬된 결과를 반환한다.
 // 제목에 포함되면 가중치를 더 준다. limit 지정 시 상위 N개만 반환.
 function searchAll(query, limit) {
   const q = (query || "").trim().toLowerCase();
   if (!q) return [];
-  const terms = q.split(/\s+/).filter(Boolean);
+  const terms = expandSearchTerms(q.split(/\s+/).filter(Boolean));
   const index = buildSearchIndex();
 
   const scored = index

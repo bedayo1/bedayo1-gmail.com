@@ -77,6 +77,50 @@
   margin-top: 2px;
 }
 
+.chat-choice-chips {
+  align-self: flex-start;
+  max-width: 86%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chat-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.chat-chip:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.chat-chip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.chat-chip.picked {
+  opacity: 1;
+  font-weight: 600;
+}
+
+.chat-chip.chat-chip-correct {
+  border-color: #2e9e5b;
+  background: rgba(46, 158, 91, 0.15);
+  color: #2e9e5b;
+}
+
+.chat-chip.chat-chip-wrong {
+  border-color: #d64545;
+  background: rgba(214, 69, 69, 0.15);
+  color: #d64545;
+}
+
 .chat-form {
   display: flex;
   gap: 8px;
