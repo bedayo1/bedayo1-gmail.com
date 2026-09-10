@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#062126"/>
+  <text x="600" y="300" font-size="170" text-anchor="middle">🚆</text>
+  <text x="600" y="420" font-size="56" fill="#00e5ff" text-anchor="middle" font-family="'Malgun Gothic', sans-serif" font-weight="700">기관사 안전교육 시스템</text>
+  <text x="600" y="475" font-size="28" fill="#9db3ba" text-anchor="middle" font-family="'Malgun Gothic', sans-serif">Locomotive Engineer Safety Training</text>
+</svg>
