@@ -5,45 +5,104 @@
    지금 있는 데이터만으로 가능한 "정답/오답 자동 판정 + 누적 취약분야 추천"까지 구현했다. */
 
 const SCENARIO_SOURCES = [
-  { key: "emergencies", label: "이례상황", icon: "🚨", desc: "화재·탈선 등 이례상황 매뉴얼 기반", getSteps: (x) => x.procedureSteps || [] },
+  {
+    key: "emergencies",
+    label: "이례상황",
+    icon: "🚨",
+    desc: "화재·탈선 등 이례상황 매뉴얼 기반",
+    manualPath: "pages/이례상황메뉴얼/emergency.html",
+    getSteps: (x) => x.procedureSteps || [],
+    getPremise: (x) => x.condition || "",
+  },
   {
     key: "malfunctions",
     label: "고장처치",
     icon: "🔧",
     desc: "차종별 고장처치 매뉴얼 기반",
+    manualPath: "pages/고장조치메뉴얼/malfunction.html",
     getSteps: (x) => (x.procedure || "").split("\n").map((s) => s.replace(/^\s*\d+\.\s*/, "").trim()).filter(Boolean),
+    getPremise: (x) => [x.symptom, x.cause].filter(Boolean).join(" "),
   },
 ];
 
+// Plan 단계 카드는 실제 등록된 분류(이례상황 매뉴얼의 "상황 유형" 필드 + 고장처치)를 그대로 따른다.
+// 실제 데이터가 없는 카테고리를 있는 것처럼 꾸며 보여주지 않기 위해, 등록 폼(emergency.html)의
+// 상황 유형 선택지(화재/충돌/탈선/기타)를 기준으로 카드를 만들고, 그중 3단계 이상 절차를 가진
+// 매뉴얼이 실제로 있는 카테고리만 화면에 노출한다.
+const EMERGENCY_CATEGORIES = [
+  { category: "화재", icon: "🔥" },
+  { category: "충돌", icon: "💥" },
+  { category: "탈선", icon: "🚈" },
+  { category: "기타", icon: "❓" },
+];
+
+function buildScenarioCards() {
+  const emergencySrc = SCENARIO_SOURCES.find((s) => s.key === "emergencies");
+  const malfunctionSrc = SCENARIO_SOURCES.find((s) => s.key === "malfunctions");
+  const emergencyData = loadData("emergencies", []);
+  const malfunctionData = loadData("malfunctions", []);
+
+  const cards = [];
+
+  EMERGENCY_CATEGORIES.forEach(({ category, icon }) => {
+    const hasScenario = emergencyData.some(
+      (x) => x.category === category && emergencySrc.getSteps(x).length >= 3
+    );
+    if (!hasScenario) return; // 이 카테고리에 실전 시나리오로 쓸 매뉴얼이 아직 없으면 카드 자체를 만들지 않는다.
+    cards.push({
+      sourceKey: "emergencies",
+      category,
+      label: category,
+      icon,
+      desc: `${category} 관련 이례상황 매뉴얼 기반`,
+    });
+  });
+
+  const hasMalfunctionScenario = malfunctionData.some((x) => malfunctionSrc.getSteps(x).length >= 3);
+  if (hasMalfunctionScenario) {
+    cards.push({
+      sourceKey: "malfunctions",
+      category: null,
+      label: "차량장애",
+      icon: "🔧",
+      desc: "차종별 고장처치 매뉴얼 기반",
+    });
+  }
+
+  return cards;
+}
+
 const STEPS = [
-  { key: "plan", label: "Plan", desc: "사고사례 선택" },
-  { key: "do", label: "Do", desc: "학습 시나리오 생성" },
-  { key: "check", label: "Check", desc: "즉각적 오류 진단" },
-  { key: "act", label: "Act", desc: "오답 데이터 기반 추천" },
+  { key: "plan", letter: "P", label: "Plan", desc: "사고사례 선택" },
+  { key: "do", letter: "D", label: "Do", desc: "학습 시나리오 생성" },
+  { key: "check", letter: "C", label: "Check", desc: "즉각적 오류 진단" },
+  { key: "act", letter: "A", label: "Act", desc: "오답 데이터 기반 추천" },
 ];
 
 let currentStepIndex = 0;
-let run = null; // { sourceKey, itemTitle, steps, stepIndex, wrongSteps: [] }
+let run = null; // { sourceKey, item, itemTitle, steps, stepIndex, wrongSteps: [] }
 
 function shuffleArray(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-function pickScenarioItem(sourceKey) {
+function pickScenarioItem(sourceKey, category) {
   const src = SCENARIO_SOURCES.find((s) => s.key === sourceKey);
   const pool = loadData(sourceKey, [])
+    .filter((item) => !category || item.category === category)
     .map((item) => ({ item, steps: src.getSteps(item) }))
     .filter((x) => x.steps.length >= 3);
   if (pool.length === 0) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-function pickDecoySteps(sourceKey, excludeItemTitle, count) {
+// 오답 보기(디코이)는 같은 카테고리 안에서 먼저 찾고, 부족하면 같은 자료군 전체에서 채운다.
+function pickDecoySteps(sourceKey, category, excludeItemTitle, count) {
   const src = SCENARIO_SOURCES.find((s) => s.key === sourceKey);
-  const allSteps = loadData(sourceKey, [])
-    .filter((x) => (x.title || "") !== excludeItemTitle)
-    .flatMap((x) => src.getSteps(x));
-  return shuffleArray(allSteps).slice(0, count);
+  const all = loadData(sourceKey, []).filter((x) => (x.title || "") !== excludeItemTitle);
+  const sameCategory = category ? all.filter((x) => x.category === category) : all;
+  const pooled = sameCategory.length >= 3 ? sameCategory : all;
+  return shuffleArray(pooled.flatMap((x) => src.getSteps(x))).slice(0, count);
 }
 
 /* ---------- 누적 기록 (Act 단계에서 쓸 데이터) ---------- */
@@ -64,13 +123,19 @@ function getScenarioStats() {
   });
 }
 
+function statTier(accuracy) {
+  if (accuracy >= 80) return "high";
+  if (accuracy >= 60) return "mid";
+  return "low";
+}
+
 /* ---------- 렌더링 ---------- */
 
 function renderStepper() {
   document.getElementById("pdca-stepper").innerHTML = STEPS.map(
     (s, i) => `
     <div class="pdca-step ${i === currentStepIndex ? "active" : ""} ${i < currentStepIndex ? "done" : ""}">
-      <div class="pdca-step-circle">${i + 1}</div>
+      <div class="pdca-step-circle">${s.letter}</div>
       <div class="pdca-step-label">${s.label}</div>
       <div class="pdca-step-desc">${s.desc}</div>
     </div>`
@@ -81,6 +146,7 @@ function goToStep(i) {
   currentStepIndex = i;
   renderStepper();
   renderBody();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function renderBody() {
@@ -88,20 +154,31 @@ function renderBody() {
   const step = STEPS[currentStepIndex].key;
 
   if (step === "plan") {
+    const cards = buildScenarioCards();
     body.innerHTML = `
       <h3 class="pdca-body-title">사고사례 카테고리를 선택해주세요</h3>
-      <div class="scenario-cat-grid">
-        ${SCENARIO_SOURCES.map(
-          (s) => `
-          <button type="button" class="scenario-cat-card" data-key="${s.key}">
-            <span class="scenario-cat-icon">${s.icon}</span>
-            <span class="scenario-cat-label">${s.label}</span>
-            <span class="scenario-cat-desc">${s.desc}</span>
-          </button>`
-        ).join("")}
-      </div>`;
+      <p class="pdca-body-sub">학습하고 싶은 사고사례 분야를 선택해주세요.</p>
+      ${
+        cards.length === 0
+          ? `<div class="empty-state">아직 3단계 이상의 절차를 가진 매뉴얼이 등록된 카테고리가 없어요. 매뉴얼을 더 등록해주세요.</div>`
+          : `<div class="scenario-cat-grid">
+              ${cards
+                .map(
+                  (c, i) => `
+                <button type="button" class="scenario-cat-card" data-i="${i}">
+                  <span class="scenario-cat-icon">${c.icon}</span>
+                  <span class="scenario-cat-text">
+                    <span class="scenario-cat-label">${c.label}</span>
+                    <span class="scenario-cat-desc">${c.desc}</span>
+                  </span>
+                  <span class="scenario-cat-chevron">›</span>
+                </button>`
+                )
+                .join("")}
+            </div>`
+      }`;
     body.querySelectorAll(".scenario-cat-card").forEach((btn) => {
-      btn.addEventListener("click", () => startRun(btn.dataset.key));
+      btn.addEventListener("click", () => startRun(cards[Number(btn.dataset.i)]));
     });
     return;
   }
@@ -120,13 +197,25 @@ function renderBody() {
   }
 }
 
-function startRun(sourceKey) {
-  const picked = pickScenarioItem(sourceKey);
+function startRun(card) {
+  const sourceKey = card.sourceKey;
+  const category = card.category || null;
+  const picked = pickScenarioItem(sourceKey, category);
   if (!picked) {
     showToast("등록된 매뉴얼이 부족해서 시나리오를 만들 수 없어요.");
     return;
   }
-  run = { sourceKey, itemTitle: picked.item.title, steps: picked.steps, stepIndex: 0, wrongSteps: [], finished: false };
+  run = {
+    sourceKey,
+    category,
+    item: picked.item,
+    itemTitle: picked.item.title,
+    steps: picked.steps,
+    stepIndex: 0,
+    wrongSteps: [],
+    correctSteps: [],
+    finished: false,
+  };
   goToStep(1); // Do
 }
 
@@ -134,47 +223,33 @@ function renderRunStep(body) {
   const src = SCENARIO_SOURCES.find((s) => s.key === run.sourceKey);
 
   if (run.finished) {
-    const total = run.steps.length;
-    const wrongCount = run.wrongSteps.length;
-    const correctCount = total - wrongCount;
-    body.innerHTML = `
-      <div class="scenario-run-card">
-        <div class="scenario-run-badges"><span class="badge info">${src.icon} ${src.label}</span><span class="badge neutral">실전 시나리오</span></div>
-        <h3 class="pdca-body-title">시나리오 종료 — "${run.itemTitle}"</h3>
-        <div class="scenario-score">${correctCount} / ${total}단계 정답</div>
-        ${
-          wrongCount > 0
-            ? `<div class="scenario-feedback-box">
-                <div class="scenario-feedback-title">📋 오답 리포트</div>
-                ${run.wrongSteps
-                  .map((w) => `<div class="scenario-feedback-row">· ${w.stepIndex + 1}단계 — 선택: "${w.pickedText}" → 정답: "${w.correctText}"</div>`)
-                  .join("")}
-              </div>`
-            : `<div class="scenario-feedback-box ok">👏 전 단계 정확히 수행하셨습니다!</div>`
-        }
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" id="btn-retry-plan">다른 시나리오 하기</button>
-          <button type="button" class="btn" id="btn-go-act">Act 단계(추천) 보기</button>
-        </div>
-      </div>`;
-    document.getElementById("btn-retry-plan").addEventListener("click", () => goToStep(0));
-    document.getElementById("btn-go-act").addEventListener("click", () => goToStep(3));
+    renderCheckResult(body, src);
     return;
   }
 
   const correctStep = run.steps[run.stepIndex];
-  const decoys = pickDecoySteps(run.sourceKey, run.itemTitle, 2);
+  const decoys = pickDecoySteps(run.sourceKey, run.category, run.itemTitle, 2);
   const options = shuffleArray([correctStep, ...decoys]);
+  const premise = src.getPremise(run.item);
+  const manualHref = `${getRootBase()}${src.manualPath}?title=${encodeURIComponent(run.itemTitle)}`;
 
   body.innerHTML = `
     <div class="scenario-run-card">
-      <div class="scenario-run-badges"><span class="badge info">${src.icon} ${src.label}</span><span class="badge neutral">실전 시나리오</span><span class="scenario-run-progress">${run.stepIndex + 1} / ${run.steps.length}</span></div>
-      <h3 class="pdca-body-title">"${run.itemTitle}" 상황입니다</h3>
+      <div class="scenario-run-badges">
+        <span class="badge info">${src.icon} ${src.label}</span>
+        <span class="badge danger">실전 시나리오</span>
+        <span class="scenario-run-progress">${run.stepIndex + 1} / ${run.steps.length}</span>
+      </div>
+      <h3 class="pdca-body-title">시나리오 — "${run.itemTitle}"</h3>
+      ${premise ? `<p class="scenario-run-premise">${premise}</p>` : ""}
       <p class="scenario-run-question">다음으로 해야 할 조치는 무엇일까요?</p>
       <div class="scenario-choice-list">
         ${options.map((text, i) => `<button type="button" class="scenario-choice" data-i="${i}">${text}</button>`).join("")}
       </div>
       <div id="scenario-run-feedback"></div>
+      <div class="scenario-run-footer">
+        <a class="btn secondary" href="${manualHref}" target="_blank" rel="noopener">📖 관련 매뉴얼 보기</a>
+      </div>
     </div>`;
 
   body.querySelectorAll(".scenario-choice").forEach((btn) => {
@@ -185,6 +260,7 @@ function renderRunStep(body) {
       btn.classList.add(correct ? "scenario-choice-correct" : "scenario-choice-wrong");
       const feedback = document.getElementById("scenario-run-feedback");
       if (correct) {
+        run.correctSteps.push({ stepIndex: run.stepIndex, text: correctStep });
         feedback.innerHTML = `<div class="scenario-feedback-box ok">✅ 정답입니다.</div>`;
       } else {
         run.wrongSteps.push({ stepIndex: run.stepIndex, correctText: correctStep, pickedText: picked });
@@ -210,6 +286,66 @@ function renderRunStep(body) {
   });
 }
 
+function renderCheckResult(body, src) {
+  const total = run.steps.length;
+  const wrongCount = run.wrongSteps.length;
+  const correctCount = total - wrongCount;
+  const score = Math.round((correctCount / total) * 100);
+  const perfect = wrongCount === 0;
+
+  body.innerHTML = `
+    <div class="scenario-run-card">
+      <div class="scenario-run-badges">
+        <span class="badge info">${src.icon} ${src.label}</span>
+        <span class="badge danger">실전 시나리오</span>
+      </div>
+
+      <div class="scenario-result-banner ${perfect ? "ok" : "bad"}">
+        <span class="scenario-result-icon">${perfect ? "✅" : "❌"}</span>
+        <span class="scenario-result-text">${perfect ? "전 절차를 정확히 수행했습니다." : "일부 절차가 누락되었습니다."}</span>
+        <span class="scenario-result-score">${score}점 <small>/ 100점</small></span>
+      </div>
+
+      <h3 class="pdca-body-title">"${run.itemTitle}" 결과</h3>
+
+      ${
+        wrongCount > 0
+          ? `<div class="scenario-feedback-box">
+              <div class="scenario-feedback-title">⚠️ 누락·오류 절차</div>
+              ${run.wrongSteps
+                .map(
+                  (w, i) => `
+                <div class="scenario-numbered-row bad"><span class="scenario-numbered-dot bad">${i + 1}</span>
+                  ${w.stepIndex + 1}단계 — 선택: "${w.pickedText}" → 정답: "${w.correctText}"</div>`
+                )
+                .join("")}
+            </div>`
+          : ""
+      }
+      ${
+        run.correctSteps.length > 0
+          ? `<div class="scenario-feedback-box ok">
+              <div class="scenario-feedback-title">✅ 잘한 점</div>
+              ${run.correctSteps
+                .map((c, i) => `<div class="scenario-numbered-row ok"><span class="scenario-numbered-dot ok">${i + 1}</span> ${c.stepIndex + 1}단계 — "${c.text}"</div>`)
+                .join("")}
+            </div>`
+          : ""
+      }
+      <div class="scenario-feedback-box">
+        <div class="scenario-feedback-title">📋 정답 예시 (핵심 절차)</div>
+        ${run.steps.map((s, i) => `<div class="scenario-numbered-row"><span class="scenario-numbered-dot">${i + 1}</span> ${s}</div>`).join("")}
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="btn-retry-plan">다른 시나리오 하기</button>
+        <button type="button" class="btn" id="btn-go-act">Act 단계(추천) 보기</button>
+      </div>
+    </div>`;
+  document.getElementById("btn-retry-plan").addEventListener("click", () => goToStep(0));
+  document.getElementById("btn-go-act").addEventListener("click", () => goToStep(3));
+}
+
 function renderActStep(body) {
   const stats = getScenarioStats();
   const withData = stats.filter((s) => s.attemptCount > 0);
@@ -219,35 +355,84 @@ function renderActStep(body) {
     return;
   }
 
+  const totalAll = withData.reduce((s, x) => s + x.total, 0);
+  const correctAll = withData.reduce((s, x) => s + x.correct, 0);
+  const overall = Math.round((correctAll / totalAll) * 100);
   const weakest = [...withData].sort((a, b) => a.accuracy - b.accuracy)[0];
   const allStrong = weakest.accuracy >= 90;
 
+  // 취약 영역에서 아직 오답이 있었던(=아직 완벽히 못 맞춘) 매뉴얼을 최근 시도 기준으로 최대 3개 추천한다.
+  const attempts = loadData("scenarioAttempts", []);
+  const recommendTitles = [
+    ...new Set(
+      attempts
+        .filter((a) => a.sourceKey === weakest.key && a.correct < a.total)
+        .map((a) => a.itemTitle)
+    ),
+  ].slice(0, 3);
+
   body.innerHTML = `
     <h3 class="pdca-body-title">나의 학습 분석 결과</h3>
+    <div class="scenario-act-summary">
+      <div class="scenario-donut" style="--pct:${overall}">
+        <div class="scenario-donut-inner">
+          <div class="scenario-donut-score">${overall}점</div>
+          <div class="scenario-donut-label">종합 점수</div>
+        </div>
+      </div>
+      <div class="scenario-act-summary-text">
+        ${
+          allStrong
+            ? `기본적인 대응 능력이 우수합니다. 지금까지 훈련한 영역 모두 정답률이 높으니, 다른 카테고리도 훈련해서 범위를 넓혀보세요.`
+            : `기본적인 대응 능력은 양호하나, <strong>${weakest.label}</strong> 영역(정답률 ${weakest.accuracy}%)에서 보완이 필요합니다.`
+        }
+      </div>
+    </div>
+
+    <div class="pdca-body-title" style="margin-top:20px;">항목별 정답률</div>
     <div class="scenario-stat-grid">
       ${withData
         .map(
           (s) => `
         <div class="scenario-stat-card">
           <div class="scenario-stat-label">${s.icon} ${s.label} (${s.attemptCount}회 훈련)</div>
-          <div class="scenario-stat-bar-track"><div class="scenario-stat-bar-fill" style="width:${s.accuracy}%"></div></div>
+          <div class="scenario-stat-bar-track"><div class="scenario-stat-bar-fill tier-${statTier(s.accuracy)}" style="width:${s.accuracy}%"></div></div>
           <div class="scenario-stat-value">${s.accuracy}%</div>
         </div>`
         )
         .join("")}
     </div>
-    <div class="scenario-feedback-box ${allStrong ? "ok" : ""}">
-      ${
-        allStrong
-          ? `👏 지금까지 훈련한 영역 모두 정답률이 높아요. 다른 카테고리도 훈련해서 범위를 넓혀보세요.`
-          : `💡 <strong>${weakest.label}</strong> 영역의 정답률이 가장 낮아요 (${weakest.accuracy}%). 이 카테고리로 시나리오를 더 훈련해보시는 걸 추천드립니다.`
-      }
-    </div>
+
+    ${
+      recommendTitles.length > 0
+        ? `<div class="pdca-body-title" style="margin-top:20px;">🎯 AI 추천 학습</div>
+           <div class="scenario-recommend-list">
+             ${recommendTitles
+               .map(
+                 (title, i) => `
+               <div class="scenario-recommend-row">
+                 <span class="scenario-numbered-dot">${i + 1}</span>
+                 <span class="scenario-recommend-title">${title}</span>
+                 <div class="scenario-recommend-actions">
+                   <a class="btn secondary small" href="${getRootBase()}${weakest.manualPath}?title=${encodeURIComponent(title)}" target="_blank" rel="noopener">📖 매뉴얼 학습</a>
+                   <button type="button" class="btn small" data-retrain-title="${title}">🎮 시나리오 실습</button>
+                 </div>
+               </div>`
+               )
+               .join("")}
+           </div>`
+        : ""
+    }
+
     <div class="modal-actions">
-      <button type="button" class="btn" id="btn-act-retrain">${weakest.label} 다시 훈련하기</button>
+      <button type="button" class="btn" id="btn-act-retrain">${weakest.label} 시나리오 다시 훈련하기</button>
     </div>`;
 
-  document.getElementById("btn-act-retrain").addEventListener("click", () => startRun(weakest.key));
+  const retrainCard = { sourceKey: weakest.key, category: null };
+  document.getElementById("btn-act-retrain").addEventListener("click", () => startRun(retrainCard));
+  body.querySelectorAll("[data-retrain-title]").forEach((btn) => {
+    btn.addEventListener("click", () => startRun(retrainCard));
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {
