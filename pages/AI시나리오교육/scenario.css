@@ -1,0 +1,220 @@
+.pdca-stepper {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pdca-step {
+  flex: 1;
+  text-align: center;
+  opacity: 0.5;
+}
+
+.pdca-step.active,
+.pdca-step.done {
+  opacity: 1;
+}
+
+.pdca-step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-surface-hover);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 6px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pdca-step.active .pdca-step-circle {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #04222a;
+}
+
+.pdca-step.done .pdca-step-circle {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pdca-step-label {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pdca-step-desc {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.pdca-body-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+}
+
+.scenario-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.scenario-cat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface-hover);
+  cursor: pointer;
+  text-align: left;
+}
+
+.scenario-cat-card:hover {
+  border-color: var(--color-primary);
+}
+
+.scenario-cat-icon {
+  font-size: 26px;
+}
+
+.scenario-cat-label {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.scenario-cat-desc {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.scenario-run-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scenario-run-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scenario-run-progress {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.scenario-run-question {
+  margin: 0;
+  font-weight: 600;
+}
+
+.scenario-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scenario-choice {
+  text-align: left;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.scenario-choice:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.scenario-choice:disabled {
+  cursor: default;
+}
+
+.scenario-choice-correct {
+  border-color: #2e9e5b;
+  background: rgba(46, 158, 91, 0.15);
+}
+
+.scenario-choice-wrong {
+  border-color: #d64545;
+  background: rgba(214, 69, 69, 0.15);
+}
+
+.scenario-feedback-box {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.scenario-feedback-box.ok {
+  border-color: #2e9e5b;
+  color: #2e9e5b;
+}
+
+.scenario-feedback-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.scenario-feedback-row {
+  color: var(--color-text-muted);
+}
+
+.scenario-score {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.scenario-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.scenario-stat-card {
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-hover);
+}
+
+.scenario-stat-label {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.scenario-stat-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-bg);
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.scenario-stat-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.scenario-stat-value {
+  font-size: 13px;
+  font-weight: 700;
+}

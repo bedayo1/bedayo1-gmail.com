@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { key: "home", label: "홈", path: "index.html", icon: "🏠", group: "main" },
   { key: "search", label: "통합검색", path: "pages/통합검색/search.html", icon: "🔍", group: "main" },
   { key: "chatbot", label: "AI챗봇", path: "pages/AI챗봇/chatbot.html", icon: "🤖", group: "main" },
+  { key: "ai-scenario", label: "AI 시나리오 교육", path: "pages/AI시나리오교육/scenario.html", icon: "🧭", group: "main" },
   { key: "notice", label: "공지사항", path: "pages/공지사항/notice.html", icon: "📢", group: "main" },
   { key: "course", label: "교육과정 관리", path: "pages/교육과정관리/course.html", icon: "📚", group: "main" },
   { key: "video", label: "교육영상", path: "pages/교육영상/video.html", icon: "🎬", group: "main" },
