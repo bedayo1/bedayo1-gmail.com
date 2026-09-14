@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { key: "notice", label: "공지사항", path: "pages/공지사항/notice.html", icon: "📢", group: "main" },
   { key: "course", label: "교육과정 관리", path: "pages/교육과정관리/course.html", icon: "📚", group: "main" },
   { key: "video", label: "교육영상", path: "pages/교육영상/video.html", icon: "🎬", group: "main" },
+  { key: "ai-scenario", label: "AI 시나리오 교육", path: "pages/AI시나리오교육/scenario.html", icon: "🧭", group: "main" },
   { key: "dia", label: "다이아", path: "pages/다이아/dia.html", icon: "🚆", group: "main" },
   { key: "accident", label: "사고사례", path: "pages/사고사례/accident.html", icon: "📋", group: "main" },
   { key: "malfunction", label: "고장처치 매뉴얼", path: "pages/고장조치메뉴얼/malfunction.html", icon: "🔧", group: "main" },
