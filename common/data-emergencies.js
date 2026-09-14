@@ -4,7 +4,7 @@
 const EMERGENCY_SEED = [
   {
     title: "터널 내 정차 시 승객 대피",
-    category: "화재",
+    category: "열차운행장애",
     condition: "터널 구간에서 화재로 인해 열차가 정차하고 자력 운행이 불가능한 경우",
     procedureSteps: [
       "즉시 비상제동 체결 및 관제 보고",
@@ -17,7 +17,7 @@ const EMERGENCY_SEED = [
   },
   {
     title: "선로 내 장애물 발견",
-    category: "기타",
+    category: "열차운행장애",
     condition: "운행 중 전방 선로 위에서 사람, 차량, 낙하물 등 장애물을 육안으로 확인한 경우",
     procedureSteps: [
       "즉시 비상제동 체결",

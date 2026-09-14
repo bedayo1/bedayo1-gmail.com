@@ -121,7 +121,7 @@ function openModal(id) {
 
   document.getElementById("f-id").value = id || "";
   document.getElementById("f-title").value = item ? item.title : "";
-  document.getElementById("f-category").value = item ? item.category : "화재";
+  document.getElementById("f-category").value = item ? item.category : "열차운행장애";
   document.getElementById("f-condition").value = item ? item.condition : "";
   document.getElementById("f-procedure").value = item ? (item.procedureSteps || []).join("\n") : "";
   document.getElementById("f-caution").value = item ? item.caution : "";

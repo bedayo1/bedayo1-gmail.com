@@ -161,9 +161,32 @@ function syncSeedFilesByTitle(key, seedArray) {
   if (changed) saveData(key, current);
 }
 
+// 이례상황 "상황 유형" 분류 체계를 화재/충돌/탈선/기타에서 열차운행장애/신호장애/전원장애/승강장
+// 안전사고/기상상황/인적사고/기타로 바꾸면서, 기존 시드 2건의 카테고리 이름도 새 체계에 맞게
+// 한 번만 옮겨준다 (제목 기준 — 이미 시딩된 브라우저에도 반영되도록).
+function migrateLegacyEmergencyCategories() {
+  const renameByTitle = {
+    "터널 내 정차 시 승객 대피": "열차운행장애",
+    "선로 내 장애물 발견": "열차운행장애",
+  };
+  const current = loadData("emergencies", []);
+  let changed = false;
+  current.forEach((item) => {
+    const newCat = renameByTitle[item.title];
+    if (newCat && item.category !== newCat) {
+      item.category = newCat;
+      changed = true;
+    }
+  });
+  if (changed) saveData("emergencies", current);
+}
+
 function seedCoreData() {
   if (typeof MALFUNCTION_SEED !== "undefined") seedOnceIfEmpty("malfunctions", MALFUNCTION_SEED);
-  if (typeof EMERGENCY_SEED !== "undefined") seedOnceIfEmpty("emergencies", EMERGENCY_SEED);
+  if (typeof EMERGENCY_SEED !== "undefined") {
+    seedOnceIfEmpty("emergencies", EMERGENCY_SEED);
+    migrateLegacyEmergencyCategories();
+  }
   if (typeof ACCIDENT_SEED !== "undefined") seedOnceIfEmpty("accidents", ACCIDENT_SEED);
   // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.
   if (typeof EMPLOYEE_SEED !== "undefined") seedOnceIfEmpty("employees", EMPLOYEE_SEED);

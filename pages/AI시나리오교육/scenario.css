@@ -90,6 +90,19 @@
   border-color: var(--color-primary);
 }
 
+.scenario-cat-card.not-ready {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.scenario-cat-card.not-ready:hover {
+  border-color: var(--color-border);
+}
+
+.scenario-cat-card.not-ready .scenario-cat-icon {
+  filter: grayscale(1);
+}
+
 .scenario-cat-icon {
   width: 44px;
   height: 44px;
@@ -101,6 +114,15 @@
   justify-content: center;
   font-size: 22px;
 }
+
+/* 목업 사진 속 카테고리 아이콘 색상을 그대로 재현 */
+.scenario-cat-icon.color-blue { background: rgba(59, 130, 246, 0.22); }
+.scenario-cat-icon.color-red { background: rgba(239, 68, 68, 0.22); }
+.scenario-cat-icon.color-green { background: rgba(34, 197, 94, 0.22); }
+.scenario-cat-icon.color-purple { background: rgba(168, 85, 247, 0.22); }
+.scenario-cat-icon.color-orange { background: rgba(249, 115, 22, 0.22); }
+.scenario-cat-icon.color-slate { background: rgba(100, 116, 139, 0.22); }
+.scenario-cat-icon.color-gray { background: rgba(148, 163, 184, 0.22); }
 
 .scenario-cat-text {
   flex: 1;

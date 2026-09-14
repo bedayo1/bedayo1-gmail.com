@@ -25,51 +25,36 @@ const SCENARIO_SOURCES = [
   },
 ];
 
-// Plan 단계 카드는 실제 등록된 분류(이례상황 매뉴얼의 "상황 유형" 필드 + 고장처치)를 그대로 따른다.
-// 실제 데이터가 없는 카테고리를 있는 것처럼 꾸며 보여주지 않기 위해, 등록 폼(emergency.html)의
-// 상황 유형 선택지(화재/충돌/탈선/기타)를 기준으로 카드를 만들고, 그중 3단계 이상 절차를 가진
-// 매뉴얼이 실제로 있는 카테고리만 화면에 노출한다.
-const EMERGENCY_CATEGORIES = [
-  { category: "화재", icon: "🔥" },
-  { category: "충돌", icon: "💥" },
-  { category: "탈선", icon: "🚈" },
-  { category: "기타", icon: "❓" },
+// Plan 단계 카드 8개(2×4)는 실제 등록 폼(emergency.html)의 "상황 유형" 선택지 + 고장처치(차량장애)를
+// 그대로 따른다 — 화면과 실제 등록 가능한 분류가 항상 일치하도록. 아직 그 카테고리로 등록된 매뉴얼이
+// 없으면 카드를 "준비 중"으로 비활성 표시해서, 있지도 않은 시나리오를 있는 것처럼 보여주지는 않는다
+// (나중에 그 유형의 매뉴얼이 등록되면 자동으로 활성화된다).
+const SCENARIO_CARD_DEFS = [
+  { sourceKey: "emergencies", category: "열차운행장애", icon: "🚆", label: "열차운행장애", subtitle: "출발·운행 중 이상", color: "blue" },
+  { sourceKey: "emergencies", category: "신호장애", icon: "⚠️", label: "신호장애", subtitle: "신호 관련 이상", color: "red" },
+  { sourceKey: "malfunctions", category: null, icon: "🔧", label: "차량장애", subtitle: "전동차 고장", color: "green" },
+  { sourceKey: "emergencies", category: "전원장애", icon: "⚡", label: "전원장애", subtitle: "전력 공급 이상", color: "purple" },
+  { sourceKey: "emergencies", category: "승강장 안전사고", icon: "🚉", label: "승강장 안전사고", subtitle: "승객 안전 관련", color: "orange" },
+  { sourceKey: "emergencies", category: "기상상황", icon: "🌧️", label: "기상상황", subtitle: "기상 악화·자연재해", color: "slate" },
+  { sourceKey: "emergencies", category: "인적사고", icon: "🧍", label: "인적사고", subtitle: "선로침입·자살사고 등", color: "blue" },
+  { sourceKey: "emergencies", category: "기타", icon: "❓", label: "기타", subtitle: "기타 이례상황", color: "gray" },
 ];
 
 function buildScenarioCards() {
-  const emergencySrc = SCENARIO_SOURCES.find((s) => s.key === "emergencies");
-  const malfunctionSrc = SCENARIO_SOURCES.find((s) => s.key === "malfunctions");
-  const emergencyData = loadData("emergencies", []);
-  const malfunctionData = loadData("malfunctions", []);
-
-  const cards = [];
-
-  EMERGENCY_CATEGORIES.forEach(({ category, icon }) => {
-    const hasScenario = emergencyData.some(
-      (x) => x.category === category && emergencySrc.getSteps(x).length >= 3
-    );
-    if (!hasScenario) return; // 이 카테고리에 실전 시나리오로 쓸 매뉴얼이 아직 없으면 카드 자체를 만들지 않는다.
-    cards.push({
-      sourceKey: "emergencies",
-      category,
-      label: category,
-      icon,
-      desc: `${category} 관련 이례상황 매뉴얼 기반`,
-    });
+  return SCENARIO_CARD_DEFS.map((def) => {
+    const src = SCENARIO_SOURCES.find((s) => s.key === def.sourceKey);
+    const data = loadData(def.sourceKey, []);
+    const ready = data.some((x) => (!def.category || x.category === def.category) && src.getSteps(x).length >= 3);
+    return {
+      sourceKey: def.sourceKey,
+      category: def.category,
+      label: def.label,
+      icon: def.icon,
+      color: def.color,
+      desc: ready ? def.subtitle : "아직 등록된 매뉴얼이 없어요",
+      ready,
+    };
   });
-
-  const hasMalfunctionScenario = malfunctionData.some((x) => malfunctionSrc.getSteps(x).length >= 3);
-  if (hasMalfunctionScenario) {
-    cards.push({
-      sourceKey: "malfunctions",
-      category: null,
-      label: "차량장애",
-      icon: "🔧",
-      desc: "차종별 고장처치 매뉴얼 기반",
-    });
-  }
-
-  return cards;
 }
 
 const STEPS = [
@@ -158,27 +143,30 @@ function renderBody() {
     body.innerHTML = `
       <h3 class="pdca-body-title">사고사례 카테고리를 선택해주세요</h3>
       <p class="pdca-body-sub">학습하고 싶은 사고사례 분야를 선택해주세요.</p>
-      ${
-        cards.length === 0
-          ? `<div class="empty-state">아직 3단계 이상의 절차를 가진 매뉴얼이 등록된 카테고리가 없어요. 매뉴얼을 더 등록해주세요.</div>`
-          : `<div class="scenario-cat-grid">
-              ${cards
-                .map(
-                  (c, i) => `
-                <button type="button" class="scenario-cat-card" data-i="${i}">
-                  <span class="scenario-cat-icon">${c.icon}</span>
-                  <span class="scenario-cat-text">
-                    <span class="scenario-cat-label">${c.label}</span>
-                    <span class="scenario-cat-desc">${c.desc}</span>
-                  </span>
-                  <span class="scenario-cat-chevron">›</span>
-                </button>`
-                )
-                .join("")}
-            </div>`
-      }`;
+      <div class="scenario-cat-grid">
+        ${cards
+          .map(
+            (c, i) => `
+          <button type="button" class="scenario-cat-card ${c.ready ? "" : "not-ready"}" data-i="${i}">
+            <span class="scenario-cat-icon color-${c.color}">${c.icon}</span>
+            <span class="scenario-cat-text">
+              <span class="scenario-cat-label">${c.label}</span>
+              <span class="scenario-cat-desc">${c.desc}</span>
+            </span>
+            ${c.ready ? `<span class="scenario-cat-chevron">›</span>` : `<span class="badge neutral">준비 중</span>`}
+          </button>`
+          )
+          .join("")}
+      </div>`;
     body.querySelectorAll(".scenario-cat-card").forEach((btn) => {
-      btn.addEventListener("click", () => startRun(cards[Number(btn.dataset.i)]));
+      btn.addEventListener("click", () => {
+        const card = cards[Number(btn.dataset.i)];
+        if (!card.ready) {
+          showToast("아직 이 카테고리로 등록된 매뉴얼이 없어요. 매뉴얼이 등록되면 바로 훈련할 수 있어요.");
+          return;
+        }
+        startRun(card);
+      });
     });
     return;
   }
