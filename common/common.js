@@ -189,7 +189,15 @@ function seedCoreData() {
   }
   if (typeof ACCIDENT_SEED !== "undefined") seedOnceIfEmpty("accidents", ACCIDENT_SEED);
   // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.
-  if (typeof EMPLOYEE_SEED !== "undefined") seedOnceIfEmpty("employees", EMPLOYEE_SEED);
+  if (typeof EMPLOYEE_SEED !== "undefined") {
+    seedOnceIfEmpty("employees", EMPLOYEE_SEED);
+    // 이미 시딩이 끝난 기기(관리자 PC, 발표 때 쓸 폰 등)에도 나중에 코드에 추가한 새 사번이 로그인되게
+    // 사번 기준으로 없는 사람만 더해준다 (예: 발표용 테스트 계정 1234).
+    const currentEmployees = loadData("employees", []);
+    const existingIds = new Set(currentEmployees.map((e) => e.empId));
+    const newOnes = EMPLOYEE_SEED.filter((e) => !existingIds.has(e.empId));
+    if (newOnes.length > 0) saveData("employees", [...currentEmployees, ...newOnes]);
+  }
   if (typeof NOTICE_SEED !== "undefined") {
     seedOnceIfEmpty("adminNotices", NOTICE_SEED);
     importNewSeedItemsByTitle("adminNotices", NOTICE_SEED);
