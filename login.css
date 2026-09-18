@@ -95,6 +95,12 @@ body.login-page {
   text-align: center;
 }
 
+.login-test-notice {
+  margin-top: 8px;
+  border: 1px dashed var(--color-primary);
+  color: var(--color-text);
+}
+
 .login-switch {
   text-align: center;
   margin-top: 14px;
