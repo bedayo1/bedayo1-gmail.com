@@ -371,7 +371,8 @@ function closeModal() {
 
 /* ---------- 초기화 ---------- */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appReady; // 클라우드에서 최신 데이터를 받아온 뒤에 화면을 그린다
   renderLayout("admin-notice");
 
   document.getElementById("f-type").innerHTML = NOTICE_TYPES.map((t) => `<option value="${t}">${t}</option>`).join("");

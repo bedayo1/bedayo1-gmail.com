@@ -186,7 +186,8 @@ function closeDetail() {
   document.getElementById("edu-detail-backdrop").classList.remove("open");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appReady; // 클라우드에서 최신 데이터를 받아온 뒤에 화면을 그린다
   renderLayout("admin-education");
   renderList();
   renderPopularManuals();

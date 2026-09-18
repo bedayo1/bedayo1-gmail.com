@@ -214,7 +214,8 @@ function closeModal() {
 
 /* ---------- 초기화 ---------- */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appReady; // 클라우드에서 최신 데이터를 받아온 뒤에 화면을 그린다
   renderLayout("board");
   renderPostList();
   onViewportChange(renderPostList);

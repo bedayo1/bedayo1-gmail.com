@@ -86,7 +86,96 @@ function loadData(key, defaultValue) {
 
 function saveData(key, value) {
   localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+  cloudPushData(key, value);
 }
+
+/* ---------- 클라우드 동기화 (Firestore) ---------- */
+/* 기존 localStorage(kcs_*) 구조는 그대로 두고, 그중 "여러 사람이 같이 보는" 데이터만
+   Firestore의 appData/{key} 문서에 그대로 미러링한다.
+   - 저장할 때(saveData): 로컬에 즉시 쓰고, 실패해도 앱이 멈추지 않도록 클라우드 저장은 최선노력(fire-and-forget)으로 시도한다.
+   - 페이지 진입 시(pullCloudData, DOMContentLoaded 맨 앞에서 await): 클라우드의 최신값을 먼저 받아와
+     로컬을 덮어쓴 뒤에 화면을 그리게 해서, 다른 기기에서 추가한 데이터도 새로고침 한 번으로 바로 보이게 한다.
+   Firebase 스크립트/설정이 없는 페이지(또는 오프라인)에서는 자동으로 로컬 전용 모드로 동작한다. */
+
+let cloudDb = null;
+// 보안 규칙이 "로그인(익명 인증 포함)한 사람만 접근 가능"으로 바뀌어도, 사용자 눈에는 아무 화면도
+// 안 뜨고 자동으로 처리되도록 백그라운드에서 조용히 익명 로그인을 한다. 인증에 실패하면(익명 로그인이
+// 콘솔에서 아직 안 켜져 있는 등) 클라우드 기능 자체를 끄고 로컬 저장만으로 정상 동작하게 한다.
+let cloudAuthPromise = Promise.resolve();
+try {
+  if (typeof firebase !== "undefined" && typeof FIREBASE_CONFIG !== "undefined") {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    cloudDb = firebase.firestore();
+    if (firebase.auth) {
+      cloudAuthPromise = firebase
+        .auth()
+        .signInAnonymously()
+        .catch((e) => {
+          console.warn("클라우드 익명 로그인 실패 - 이 화면은 로컬 저장만으로 동작합니다.", e);
+          cloudDb = null;
+        });
+    }
+  }
+} catch (e) {
+  console.warn("Firebase 초기화 실패 - 이 화면은 로컬 저장만으로 동작합니다.", e);
+}
+
+// 아래 키들만 클라우드로 동기화한다 — 개인 세션 정보(session/profile 등)는 굳이 공유할 필요가 없어서 제외.
+const CLOUD_SYNCED_KEYS = [
+  "employees",
+  "employeePasswords",
+  "adminNotices",
+  "posts",
+  "casePosts",
+  "courses",
+  "courseCompletions",
+  "trainingVideos",
+  "scenarioAttempts",
+  "malfunctions",
+  "emergencies",
+  "accidents",
+  "schedules",
+  "attendances",
+];
+
+// 페이지 스크립트가 처음 로드될 때, 각 페이지 상단에 있는 "let X = loadData(...); saveData(key, X);"
+// 같은 초기화 코드가 클라우드 pull이 끝나기 "전에" 동기적으로 실행된다. 이때 saveData가 곧바로
+// 클라우드에 푸시해버리면, 로컬의 기본/구식 값으로 클라우드에 이미 있는 실제 데이터를 덮어쓰는
+// 사고가 난다. 그래서 pullCloudData가 한 번 끝나기 전까지는 cloudPushData를 아무 것도 안 하게
+// 막아둔다(로컬 저장 자체는 항상 정상 동작). 그 이후(=appReady 진입 시점)부터는 정상적으로 푸시한다.
+let cloudSyncArmed = false;
+
+function cloudPushData(key, value) {
+  if (!cloudDb || !cloudSyncArmed || !CLOUD_SYNCED_KEYS.includes(key)) return;
+  cloudDb
+    .collection("appData")
+    .doc(key)
+    .set({ data: value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .catch((e) => console.warn("클라우드 저장 실패:", key, e));
+}
+
+// 이 페이지의 첫 렌더 전에 한 번만 await 해서 쓰는 프라미스. 모든 CLOUD_SYNCED_KEYS를 한꺼번에 받아온다.
+window.cloudReady = (async function pullCloudData() {
+  await cloudAuthPromise; // 보안 규칙이 인증을 요구해도 막히지 않도록, 읽기 전에 익명 로그인부터 끝낸다.
+  if (!cloudDb) {
+    cloudSyncArmed = true; // Firebase를 못 쓰는 페이지는 로컬 전용으로 정상 동작해야 하므로 바로 해제.
+    return;
+  }
+  try {
+    const snapshots = await Promise.all(
+      CLOUD_SYNCED_KEYS.map((key) => cloudDb.collection("appData").doc(key).get())
+    );
+    snapshots.forEach((snap, i) => {
+      if (snap.exists && snap.data().data !== undefined) {
+        localStorage.setItem(STORAGE_PREFIX + CLOUD_SYNCED_KEYS[i], JSON.stringify(snap.data().data));
+      }
+    });
+  } catch (e) {
+    console.warn("클라우드 데이터를 가져오지 못했습니다 - 로컬 데이터로 계속 진행합니다.", e);
+  } finally {
+    cloudSyncArmed = true;
+  }
+})();
 
 /* ---------- 공통 헬퍼 ---------- */
 
@@ -204,7 +293,10 @@ function seedCoreData() {
     syncSeedFilesByTitle("adminNotices", NOTICE_SEED);
   }
 }
-seedCoreData();
+// 클라우드에서 최신 데이터를 먼저 받아온 "뒤에" 시드를 채워야, 로컬의 기본 시드값이 다른 사람이
+// 이미 올려둔 실제 데이터를 덮어쓰는 사고가 나지 않는다. 각 페이지는 window.appReady를 await한 뒤에
+// 첫 렌더를 하면 된다 (렌더 함수들은 대부분 loadData()를 다시 읽어오므로 이 시점 이후엔 항상 최신값).
+window.appReady = window.cloudReady.then(() => seedCoreData());
 
 // 사진 에디터가 만든 리치 HTML(bodyHtml)에서 태그를 걷어내 검색 인덱스용 순수 텍스트만 뽑는다.
 function stripHtml(html) {

@@ -61,7 +61,8 @@ function loginAsAdmin() {
   location.href = getRootBase() + (firstAdminItem ? firstAdminItem.path : "index.html");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appReady; // 클라우드에서 최신 데이터를 받아온 뒤에 화면을 그린다
   applyTheme();
 
   document.getElementById("btn-employee-login").addEventListener("click", loginAsEmployee);
