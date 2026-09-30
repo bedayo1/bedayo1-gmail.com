@@ -150,13 +150,15 @@ function pickScenarioItem(sourceKey) {
 }
 
 // 오답 보기(디코이)는 같은 자료군의 다른 매뉴얼 절차에서 무작위로 가져온다.
-function pickDecoySteps(sourceKey, excludeItemTitle, count) {
+// 여러 매뉴얼에 똑같이 등장하는 절차 문구("즉시 비상제동 체결" 등)가 정답과 겹치거나 오답끼리
+// 중복되지 않도록, 정답을 제외하고 문구 기준으로 중복 제거한 뒤 뽑는다.
+function pickDecoySteps(sourceKey, excludeItemTitle, correctStep, count) {
   const src = SCENARIO_SOURCES.find((s) => s.key === sourceKey);
   const allSteps = loadData(sourceKey, [])
     .filter((x) => (x.title || "") !== excludeItemTitle)
     .flatMap((x) => src.getSteps(x));
-  const shuffled = [...allSteps].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  const uniqueCandidates = [...new Set(allSteps)].filter((s) => s !== correctStep);
+  return shuffleArray(uniqueCandidates).slice(0, count);
 }
 
 function shuffleArray(arr) {
@@ -184,7 +186,7 @@ function startScenario(sourceKey) {
 function askScenarioStep() {
   const st = scenarioState;
   const correctStep = st.steps[st.stepIndex];
-  const decoys = pickDecoySteps(st.sourceKey, st.itemTitle, 2);
+  const decoys = pickDecoySteps(st.sourceKey, st.itemTitle, correctStep, 2);
   const options = shuffleArray([correctStep, ...decoys]).map((text) => ({ label: text, correct: text === correctStep }));
 
   appendBotText(`${st.stepIndex + 1}단계 — 다음으로 해야 할 조치는 무엇일까요?`);

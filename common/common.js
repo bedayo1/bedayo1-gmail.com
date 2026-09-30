@@ -275,6 +275,7 @@ function seedCoreData() {
   if (typeof EMERGENCY_SEED !== "undefined") {
     seedOnceIfEmpty("emergencies", EMERGENCY_SEED);
     migrateLegacyEmergencyCategories();
+    importNewSeedItemsByTitle("emergencies", EMERGENCY_SEED);
   }
   if (typeof ACCIDENT_SEED !== "undefined") seedOnceIfEmpty("accidents", ACCIDENT_SEED);
   // 직원 명단이 없으면 로그인 자체가 안 되므로(직원 로그인은 employees 목록에서 사번을 찾는 방식) 가장 먼저 보장해야 한다.

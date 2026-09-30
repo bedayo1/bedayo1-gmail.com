@@ -82,12 +82,15 @@ function pickScenarioItem(sourceKey, category) {
 }
 
 // 오답 보기(디코이)는 같은 카테고리 안에서 먼저 찾고, 부족하면 같은 자료군 전체에서 채운다.
-function pickDecoySteps(sourceKey, category, excludeItemTitle, count) {
+// "즉시 비상제동 체결"처럼 여러 매뉴얼에 똑같이 등장하는 절차 문구가 있어서, 정답과 글자가 같은
+// 보기나 서로 중복되는 보기가 뽑히지 않도록 정답을 제외하고 문구 기준으로 중복 제거한 뒤 뽑는다.
+function pickDecoySteps(sourceKey, category, excludeItemTitle, correctStep, count) {
   const src = SCENARIO_SOURCES.find((s) => s.key === sourceKey);
   const all = loadData(sourceKey, []).filter((x) => (x.title || "") !== excludeItemTitle);
   const sameCategory = category ? all.filter((x) => x.category === category) : all;
   const pooled = sameCategory.length >= 3 ? sameCategory : all;
-  return shuffleArray(pooled.flatMap((x) => src.getSteps(x))).slice(0, count);
+  const uniqueCandidates = [...new Set(pooled.flatMap((x) => src.getSteps(x)))].filter((s) => s !== correctStep);
+  return shuffleArray(uniqueCandidates).slice(0, count);
 }
 
 /* ---------- 누적 기록 (Act 단계에서 쓸 데이터) ---------- */
@@ -216,7 +219,7 @@ function renderRunStep(body) {
   }
 
   const correctStep = run.steps[run.stepIndex];
-  const decoys = pickDecoySteps(run.sourceKey, run.category, run.itemTitle, 2);
+  const decoys = pickDecoySteps(run.sourceKey, run.category, run.itemTitle, correctStep, 2);
   const options = shuffleArray([correctStep, ...decoys]);
   const premise = src.getPremise(run.item);
   const manualHref = `${getRootBase()}${src.manualPath}?title=${encodeURIComponent(run.itemTitle)}`;
