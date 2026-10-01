@@ -77,9 +77,10 @@ function renderAttendanceCard() {
 
 /* ---------- 일일안전교육: 고장처치/이례상황 매뉴얼에서 랜덤 3문항 객관식 생성 ---------- */
 
-function truncateText(text, n) {
-  const clean = (text || "").replace(/\s+/g, " ").trim();
-  return clean.length > n ? clean.slice(0, n) + "…" : clean;
+// 예전에는 42자로 잘라 "…"으로 생략했는데, 보기 내용이 잘려서 안 보인다는 피드백이 있어
+// 더 이상 자르지 않고 전체 텍스트를 그대로 보여준다 (줄바꿈/공백만 정리).
+function truncateText(text) {
+  return (text || "").replace(/\s+/g, " ").trim();
 }
 
 function shuffleArray(arr) {
@@ -87,6 +88,13 @@ function shuffleArray(arr) {
     .map((v) => [Math.random(), v])
     .sort((a, b) => a[0] - b[0])
     .map(([, v]) => v);
+}
+
+// 조치요령 전체(1~6단계 등)를 통째로 보기 하나에 넣으면 너무 길어지므로, 이례상황 매뉴얼처럼
+// "첫 번째 핵심 조치"만 뽑아 쓴다 — 억지로 글자수를 자르지 않아도 자연스럽게 짧아진다.
+function firstProcedureStep(procedure) {
+  const firstLine = (procedure || "").split("\n").map((s) => s.trim()).filter(Boolean)[0] || "";
+  return firstLine.replace(/^\s*\d+\.\s*/, "");
 }
 
 function buildEducationPool() {
@@ -99,8 +107,8 @@ function buildEducationPool() {
       type: "고장처치",
       title: m.title,
       vehicleType: m.vehicleType,
-      answerText: m.procedure || m.symptom || "",
-      questionText: `"${m.title}" 발생 시 올바른 조치요령은?`,
+      answerText: firstProcedureStep(m.procedure) || m.symptom || "",
+      questionText: `"${m.title}" 발생 시 가장 먼저 취해야 할 조치는?`,
       raw: m,
     }));
   const emergencies = loadData("emergencies", []).map((e) => ({
@@ -115,12 +123,12 @@ function buildEducationPool() {
 }
 
 function buildQuizQuestion(item, pool) {
-  const correctText = truncateText(item.answerText, 42);
+  const correctText = truncateText(item.answerText);
   const distractorTexts = [
     ...new Set(
       pool
         .filter((x) => x.title !== item.title)
-        .map((x) => truncateText(x.answerText, 42))
+        .map((x) => truncateText(x.answerText))
         .filter((t) => t && t !== correctText)
     ),
   ];
